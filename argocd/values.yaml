@@ -2155,11 +2155,11 @@ server:
   ingress:
     # -- Enable an ingress resource for the Argo CD server
     enabled: true
-     annotations:
-       kubernetes.io/ingress.class: alb
-       alb.ingress.kubernetes.io/scheme: internet-facing
-       alb.ingress.kubernetes.io/target-type: ip
-     hostname: argocd-devops.unixcloudfusion.in
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+    hostname: argocd-devops.unixcloudfusion.in
     # -- Specific implementation for ingress controller. One of `generic`, `aws` or `gke`
     ## Additional configuration might be required in related configuration sections
     controller: generic
@@ -2435,8 +2435,7 @@ repoServer:
   extraArgs: []
 
   # -- Environment variables to pass to repo server
-  env:
-    - --insecure
+  env: []
 
   # -- envFrom to pass to repo server
   # @default -- `[]` (See [values.yaml])
