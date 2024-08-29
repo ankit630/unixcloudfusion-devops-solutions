@@ -37,7 +37,7 @@ Resources:
   AdminInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0dcc1e21636832c5d  # Amazon Linux 2 AMI (adjust for your region)
+      ImageId: ami-066784287e358dad1  # Amazon Linux 2 AMI (adjust for your region)
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
       IamInstanceProfile: !Ref AdminInstanceProfile
