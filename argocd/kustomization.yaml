@@ -1,0 +1,12 @@
+kind: Kustomization
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    version: 7.3.10 # appVersion v2.11.6
+    releaseName: argocd
+    namespace: argocd
+    valuesFile: values.yaml
+    apiVersions:
+      - monitoring.coreos.com/v1
+    includeCRDs: true

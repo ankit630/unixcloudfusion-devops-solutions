@@ -1,0 +1,24 @@
+AWS Shell uses the AWS CLI Configuration and improves the productivity with an autocomplete feature
+
+1. Install the python pip
+root@f7722ce7401c:~# pip install aws-shell
+Command 'pip' not found, but can be installed with:
+apt install python3-pip
+root@f7722ce7401c:~# apt install python3-pip -y
+Reading package lists... Done
+Building dependency tree... Done
+
+2. Install the aws-shell package using python installer
+root@f7722ce7401c:~# pip install aws-shell
+Collecting aws-shell
+  Downloading aws_shell-0.2.2-py2.py3-none-any.whl (50 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.6/50.6 KB 827.2 kB/s eta 0:00:00
+Collecting boto3<2.0.0,>=1.9.0
+
+3. Start the aws-shell
+root@f7722ce7401c:~# aws-shell
+
+4. Try to enter
+aws> s3api (#all available options will shown)
+
+AWS Shell can improve the speed with autocomplete. To exit out press F10 , In mac use Fn + F10

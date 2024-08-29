@@ -1,0 +1,281 @@
+1. Start by setting up the credentials using the following configure command
+# aws configure
+
+2. Install the openjdk on your machine
+# apt install openjdk-19-jdk -y
+
+3. Install the maven on your machine as
+# apt install maven -y
+
+4. Create the example directory to hold the codebase
+# mkdir AWS-SDK-Example
+# cd AWS-SDK-Example/
+
+5. Setup the Environment for the aws sdk for java using apache maven as 
+root@f7722ce7401c:~/AWS-SDK-Example# mvn archetype:generate -DarchetypeGroupId=org.apache.maven.archetypes -DarchetypeArtifactId=maven-archetype-quickstart
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------< org.apache.maven:standalone-pom >-------------------
+[INFO] Building Maven Stub Project (No POM) 1
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] >>> maven-archetype-plugin:3.2.1:generate (default-cli) > generate-sources @ standalone-pom >>>
+[INFO]
+[INFO] <<< maven-archetype-plugin:3.2.1:generate (default-cli) < generate-sources @ standalone-pom <<<
+[INFO]
+[INFO]
+[INFO] --- maven-archetype-plugin:3.2.1:generate (default-cli) @ standalone-pom ---
+[INFO] Generating project in Interactive mode
+[INFO] Archetype [org.apache.maven.archetypes:maven-archetype-quickstart:1.4] found in catalog remote
+Define value for property 'groupId': com.packt
+Define value for property 'artifactId': java-maven-demo
+Define value for property 'version' 1.0-SNAPSHOT: : com.packt.example
+Define value for property 'package' com.packt: :
+Confirm properties configuration:
+groupId: com.packt
+artifactId: java-maven-demo
+version: com.packt.example
+package: com.packt
+ Y: : Y
+[INFO] ----------------------------------------------------------------------------
+[INFO] Using following parameters for creating project from Archetype: maven-archetype-quickstart:1.4
+[INFO] ----------------------------------------------------------------------------
+[INFO] Parameter: groupId, Value: com.packt
+[INFO] Parameter: artifactId, Value: java-maven-demo
+[INFO] Parameter: version, Value: com.packt.example
+[INFO] Parameter: package, Value: com.packt
+[INFO] Parameter: packageInPathFormat, Value: com/packt
+[INFO] Parameter: package, Value: com.packt
+[INFO] Parameter: groupId, Value: com.packt
+[INFO] Parameter: artifactId, Value: java-maven-demo
+[INFO] Parameter: version, Value: com.packt.example
+[INFO] Project created from Archetype in dir: /root/AWS-SDK-Example/java-maven-demo
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  48.568 s
+[INFO] Finished at: 2024-05-05T08:31:13Z
+[INFO] ------------------------------------------------------------------------
+
+
+
+6. Install the tree command as
+apt install tree -Y
+
+7. Following directory structure would be created after running the mvn command, a pom.xml file generated under java-maven-demo folder
+root@f7722ce7401c:~/AWS-SDK-Example# tree
+.
+└── java-maven-demo
+    ├── pom.xml
+    └── src
+        ├── main
+        │   └── java
+        │       └── com
+        │           └── packt
+        │               └── App.java
+        └── test
+            └── java
+                └── com
+                    └── packt
+                        └── AppTest.java
+
+8. After that you need to update the pom.xml file to add the entire SDK as a dependency
+# vim java-maven-demo/pom.xml
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk</artifactId>
+      <version>1.11.106</version>
+    </dependency>
+If you are working on sdk above 1.9* , you can import many individual components such EC2, S3, CodeCommit, CodeDeploy
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
+    </dependency>
+
+
+9. After updating pom.xml file, you can build your project with the mvn package command
+# cd java-maven-demo/
+root@f7722ce7401c:~/AWS-SDK-Example/java-maven-demo# mvn package
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------------------< com.packt:java-maven-demo >----------------------
+[INFO] Building java-maven-demo com.packt.example
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:3.0.2:resources (default-resources) @ java-maven-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /root/AWS-SDK-Example/java-maven-demo/src/main/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ java-maven-demo ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-resources-plugin:3.0.2:testResources (default-testResources) @ java-maven-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /root/AWS-SDK-Example/java-maven-demo/src/test/resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ java-maven-demo ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- maven-surefire-plugin:2.22.1:test (default-test) @ java-maven-demo ---
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.packt.AppTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.125 s - in com.packt.AppTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- maven-jar-plugin:3.0.2:jar (default-jar) @ java-maven-demo ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.367 s
+[INFO] Finished at: 2024-05-05T08:40:07Z
+[INFO] ------------------------------------------------------------------------
+
+10. Add the following code in the pom.xml file connect with the AWS SDK, you can take reference to the pom.xml file added in the
+folder to see where to add the code
+    <build>
+        <resources>
+            <resource>
+                <directory>${env.HOME}/.aws/</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>com.packt.example.S3MavenExample</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+11. Next we are going to create the S3MavenExample.java file in the com/packt/example , the complete path would be 
+src/main/com/packt/example/S3MavenExample.java
+
+# vim src/main/com/packt/example/S3MavenExample.java
+
+import java.util.UUID;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+
+AmazonS3 s3 = new AmazonS3Client() ;
+Region s3Region = Region.getRegion(Regions.US_EAST_1);
+s3.setRegion(s3Region);
+
+String bucketName = "s3-maven-bucket-" + UUID.randomUUID();
+s3.createBucket(bucketName);
+s3.deleteBucket(bucketName);
+
+
+We are going to create an S3 bucket as per the specific region with a random number generator, prefix it with s3-maven-bucket- . We have imported UUID to generate the 
+pseudo random number. To create bucket call createBucket() method, similarly you delete by call deletebucket() method
+
+12. Run the following command to verify if the s3 bucket is created
+
+root@f7722ce7401c:~/AWS-SDK-Example/java-maven-demo# mvn clean compile exec:java
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------------------< com.packt:java-maven-demo >----------------------
+[INFO] Building java-maven-demo 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ java-maven-demo ---
+[INFO] Deleting /root/AWS-SDK-Example/java-maven-demo/target
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ java-maven-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 6 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ java-maven-demo ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 2 source files to /root/AWS-SDK-Example/java-maven-demo/target/classes
+[WARNING] /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java: /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java uses or overrides a deprecated API.
+[WARNING] /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java: Recompile with -Xlint:deprecation for details.
+[INFO]
+[INFO] >>> exec-maven-plugin:1.2.1:java (default-cli) > validate @ java-maven-demo >>>
+[INFO]
+[INFO] <<< exec-maven-plugin:1.2.1:java (default-cli) < validate @ java-maven-demo <<<
+[INFO]
+[INFO]
+[INFO] --- exec-maven-plugin:1.2.1:java (default-cli) @ java-maven-demo ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.285 s
+[INFO] Finished at: 2024-05-05T09:44:31Z
+[INFO] ------------------------------------------------------------------------
+root@f7722ce7401c:~/AWS-SDK-Example/java-maven-demo# aws s3 ls
+2024-05-05 09:28:04 s3-maven-bucket-8c593128-8852-49a1-999e-a5ee5d5d0cf8
+
+13. To delete the bucket created update the src/main/com/packt/example/S3MavenExample.java with delete function as
+package com.packt.example;
+
+import java.util.UUID;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+
+public class S3MavenExample {
+    public static void main(String[] args) {
+        AmazonS3 s3 = new AmazonS3Client();
+        Region s3Region = Region.getRegion(Regions.US_EAST_1);
+        s3.setRegion(s3Region);
+
+        String bucketName = "s3-maven-bucket-8c593128-8852-49a1-999e-a5ee5d5d0cf8";
+        s3.deleteBucket(bucketName);
+    }
+}
+
+14. Again compile the code to delete bucket as
+root@f7722ce7401c:~/AWS-SDK-Example/java-maven-demo# mvn clean compile exec:java
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------------------< com.packt:java-maven-demo >----------------------
+[INFO] Building java-maven-demo 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ java-maven-demo ---
+[INFO] Deleting /root/AWS-SDK-Example/java-maven-demo/target
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ java-maven-demo ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 6 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ java-maven-demo ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 2 source files to /root/AWS-SDK-Example/java-maven-demo/target/classes
+[WARNING] /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java: /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java uses or overrides a deprecated API.
+[WARNING] /root/AWS-SDK-Example/java-maven-demo/src/main/java/com/packt/example/S3MavenExample.java: Recompile with -Xlint:deprecation for details.
+[INFO]
+[INFO] >>> exec-maven-plugin:1.2.1:java (default-cli) > validate @ java-maven-demo >>>
+[INFO]
+[INFO] <<< exec-maven-plugin:1.2.1:java (default-cli) < validate @ java-maven-demo <<<
+[INFO]
+[INFO]
+[INFO] --- exec-maven-plugin:1.2.1:java (default-cli) @ java-maven-demo ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.000 s
+[INFO] Finished at: 2024-05-05T09:48:05Z
+[INFO] ------------------------------------------------------------------------
+
+

@@ -1,0 +1,18 @@
+1. Open the cloudshell in your AWS Dashboard
+
+2. check if you have kubectl install on shell if not can download and Install the kubectl on the cloudshell as
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.30.0/2024-05-12/bin/darwin/amd64/kubectl
+
+3. check if eksctl is installed, if not installed can download and install it as 
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl version
+
+4. Create the kubernetes cluster using eksctl as
+eksctl create cluster --name dev-cluster --version 1.30 --region us-east-1 --nodegroup-name standard-workers --node-type t3.micro --nodes 8 --nodes-min 1 --nodes-max 8 --managed
+
+5. After the Eksctl has completed the cloudformation configuration to launch the EKS Cluster you can go to the Ec2 instance and see the managed nodes. Now you can login to the Ec2 instances by the getting the config and connecting to your EKS Cluster as
+aws eks update-kubeconfig --name dev-cluster --region us-east-1
+
+6. You can try getting Namespace to verify Kubectl config is working as expected
+kubectl get ns
