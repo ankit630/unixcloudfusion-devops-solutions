@@ -64,6 +64,6 @@ kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
 # Apply ArgoCD Kustomization
 echo "Applying ArgoCD Kustomization..."
-kubectl kustomize --enable-helm | kubectl apply -f  .  
+kubectl kustomize --enable-helm | kubectl apply -f -
 
 echo "ArgoCD installation complete!"
