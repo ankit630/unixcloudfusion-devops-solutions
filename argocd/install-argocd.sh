@@ -68,6 +68,9 @@ kubectl kustomize --enable-helm | kubectl apply -f -
 
 echo "ArgoCD installation complete!"
 
+# Patch ArgoCD server to use LoadBalancer type (for easy access)
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
 # Generate a random password
 ARGOCD_PASSWORD=$(openssl rand -base64 32)
 
