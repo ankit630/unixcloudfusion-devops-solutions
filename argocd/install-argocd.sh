@@ -67,3 +67,18 @@ echo "Applying ArgoCD Kustomization..."
 kubectl kustomize --enable-helm | kubectl apply -f -
 
 echo "ArgoCD installation complete!"
+
+# Generate a random password
+ARGOCD_PASSWORD=$(openssl rand -base64 32)
+
+# Generate a random session key
+ARGOCD_SESSION_KEY=$(openssl rand -base64 32)
+
+# Create the secret
+kubectl -n argocd create secret generic argocd-secret \
+  --from-literal=admin.password=$(htpasswd -bnBC 10 "" $ARGOCD_PASSWORD | tr -d ':\n') \
+  --from-literal=admin.passwordMtime=$(date +%FT%T%Z) \
+  --from-literal=server.secretkey=$ARGOCD_SESSION_KEY
+
+# Save the admin password somewhere secure
+echo $ARGOCD_PASSWORD > argocd-admin-password.txt
