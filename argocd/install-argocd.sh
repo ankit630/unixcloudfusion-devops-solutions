@@ -2,6 +2,16 @@
 
 set -euo pipefail
 
+# Function to check if Helm is installed
+check_helm() {
+    if ! command -v helm &> /dev/null; then
+        echo "Helm is not installed. Installing Helm..."
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    else
+        echo "Helm is already installed."
+    fi
+}
+
 # Function to get EKS cluster names
 get_eks_clusters() {
     aws eks list-clusters --query 'clusters[]' --output text
@@ -24,6 +34,9 @@ test_kubectl_connection() {
 }
 
 # Main execution starts here
+
+# Check and install Helm if necessary
+check_helm
 
 # Get EKS cluster names
 clusters=($(get_eks_clusters))
