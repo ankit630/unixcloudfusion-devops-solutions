@@ -113,14 +113,14 @@ enable_helm_in_argocd() {
     fi
 
     echo "Restarting ArgoCD application controller..."
-    kubectl rollout restart deployment argocd-application-controller -n argocd
+    kubectl rollout restart deployment argocd-applicationset-controller -n argocd
     if [ $? -ne 0 ]; then
         echo "Error: Failed to restart ArgoCD application controller"
         exit 1
     fi
 
     echo "Waiting for ArgoCD application controller to restart..."
-    kubectl rollout status deployment argocd-application-controller -n argocd
+    kubectl rollout restart deployment argocd-applicationset-controller -n argocd
     if [ $? -ne 0 ]; then
         echo "Error: ArgoCD application controller failed to restart"
         exit 1
