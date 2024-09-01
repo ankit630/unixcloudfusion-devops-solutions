@@ -40,12 +40,28 @@ echo "GitLab URL: $GITLAB_URL"
 read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
 echo
 
-# Create secret in AWS Secrets Manager
-echo "Creating secret in AWS Secrets Manager..."
-aws secretsmanager create-secret \
-    --name "gitlab/gitlab-runner-secrets" \
-    --description "GitLab Runner secrets" \
-    --secret-string "{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
+# Function to create or update secret in AWS Secrets Manager
+create_or_update_secret() {
+    local secret_name="gitlab/gitlab-runner-secrets"
+    local secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
+
+    if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
+        echo "Secret already exists. Updating..."
+        aws secretsmanager update-secret \
+            --secret-id "$secret_name" \
+            --secret-string "$secret_string"
+    else
+        echo "Creating new secret..."
+        aws secretsmanager create-secret \
+            --name "$secret_name" \
+            --description "GitLab Runner secrets" \
+            --secret-string "$secret_string"
+    fi
+}
+
+# Create or update secret in AWS Secrets Manager
+echo "Creating or updating secret in AWS Secrets Manager..."
+create_or_update_secret
 
 # Apply CloudFormation stacks
 echo "Creating ServiceAccount CloudFormation stack..."
