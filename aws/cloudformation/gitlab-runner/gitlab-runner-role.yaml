@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates an IAM role for GitLab Runner
+
+Parameters:
+  EksClusterName:
+    Type: String
+    Description: Name of the EKS cluster
+
+Resources:
+  GitLabRunnerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: GitLabRunnerRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/${EksClusterName}.oidc.eks.${AWS::Region}.amazonaws.com'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                !Sub '${EksClusterName}.oidc.eks.${AWS::Region}.amazonaws.com:sub': 'system:serviceaccount:gitlab-runner:gitlab-runner-sa'
+      Policies:
+        - PolicyName: GitLabRunnerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: ARN of the created IAM role
+    Value: !GetAtt GitLabRunnerRole.Arn
