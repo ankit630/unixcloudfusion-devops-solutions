@@ -2,13 +2,37 @@
 
 set -euo pipefail
 
+# Function to check if a command is available
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
 # Function to check if Helm is installed
 check_helm() {
-    if ! command -v helm &> /dev/null; then
+    if ! command_exists helm; then
         echo "Helm is not installed. Installing Helm..."
         curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
     else
         echo "Helm is already installed."
+    fi
+}
+
+# Function to check if htpasswd is installed
+check_htpasswd() {
+    if ! command_exists htpasswd; then
+        echo "htpasswd is not installed. Installing Apache utilities..."
+        if command_exists apt-get; then
+            sudo apt-get update && sudo apt-get install -y apache2-utils
+        elif command_exists yum; then
+            sudo yum install -y httpd-tools
+        elif command_exists brew; then
+            brew install httpd
+        else
+            echo "Unable to install htpasswd. Please install it manually and run this script again."
+            exit 1
+        fi
+    else
+        echo "htpasswd is already installed."
     fi
 }
 
@@ -37,6 +61,9 @@ test_kubectl_connection() {
 
 # Check and install Helm if necessary
 check_helm
+
+# Check and install htpasswd if necessary
+check_htpasswd
 
 # Get EKS cluster names
 clusters=($(get_eks_clusters))
