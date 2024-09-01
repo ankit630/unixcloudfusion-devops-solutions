@@ -20,7 +20,9 @@ Resources:
             Action: 'sts:AssumeRoleWithWebIdentity'
             Condition:
               StringEquals:
-                !Sub '${EksClusterName}.oidc.eks.${AWS::Region}.amazonaws.com:sub': 'system:serviceaccount:gitlab-runner:gitlab-runner-sa'
+                !Sub 
+                  - '${OIDCProvider}:sub': 'system:serviceaccount:gitlab-runner:gitlab-runner-sa'
+                  - OIDCProvider: '${EksClusterName}.oidc.eks.${AWS::Region}.amazonaws.com'
       Policies:
         - PolicyName: GitLabRunnerPolicy
           PolicyDocument:
