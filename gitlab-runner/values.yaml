@@ -1,0 +1,14 @@
+gitlabUrl: https://gitlab.com/
+runnerRegistrationToken:
+  existingSecret: gitlab-runner-secret
+  key: runner-registration-token
+rbac:
+  create: true
+  serviceAccountName: gitlab-runner-sa
+  serviceAccountAnnotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/GitlabRunnerServiceAccountRole
+runners:
+  config: |
+    [[runners]]
+      [runners.kubernetes]
+        image = "ubuntu:20.04"

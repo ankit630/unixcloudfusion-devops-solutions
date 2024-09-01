@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM roles for ArgoCD and GitLab Runner
+
+Resources:
+  ArgocdServiceAccountRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: ArgocdServiceAccountRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: 'arn:aws:iam::ACCOUNT_ID:oidc-provider/OIDC_PROVIDER'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                'OIDC_PROVIDER:sub': 'system:serviceaccount:argocd:argocd-sa'
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                Resource: '*'
+
+  GitlabRunnerServiceAccountRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: GitlabRunnerServiceAccountRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: 'arn:aws:iam::ACCOUNT_ID:oidc-provider/OIDC_PROVIDER'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                'OIDC_PROVIDER:sub': 'system:serviceaccount:gitlab-runner:gitlab-runner-sa'
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                Resource: '*'
+
+Outputs:
+  ArgocdServiceAccountRoleArn:
+    Description: The ARN of the ArgoCD Service Account IAM Role
+    Value: !GetAtt ArgocdServiceAccountRole.Arn
+  GitlabRunnerServiceAccountRoleArn:
+    Description: The ARN of the GitLab Runner Service Account IAM Role
+    Value: !GetAtt GitlabRunnerServiceAccountRole.Arn
