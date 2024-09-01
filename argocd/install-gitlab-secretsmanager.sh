@@ -62,7 +62,12 @@ echo "AWS Account ID: $AWS_ACCOUNT_ID"
 OIDC_PROVIDER=$(aws eks describe-cluster --name $SELECTED_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 echo "OIDC Provider: $OIDC_PROVIDER"
 
-iam-role-path="../aws/cloudformation/todoapp/iam-role.yaml"
+# Set paths for templates
+IAM_ROLE_TEMPLATE="../aws/cloudformation/todoapp/iam-role.yaml"
+GITLAB_RUNNER_VALUES="../gitlab-runner/values.yaml"
+
+echo "IAM_ROLE_TEMPLATE is set to: $IAM_ROLE_TEMPLATE"
+echo "GITLAB_RUNNER_VALUES is set to: $GITLAB_RUNNER_VALUES"
 
 # Function to replace placeholders in yaml files
 replace_placeholders() {
@@ -74,15 +79,28 @@ replace_placeholders() {
     rm "${file}.bak"
 }
 
-# Replace placeholders in yaml files
+# Function to read ArgoCD password from file
+read_argocd_password() {
+    local password_file="argocd-admin-password.txt"
+    if [[ -f "$password_file" ]]; then
+        ARGOCD_PASSWORD=$(cat "$password_file")
+        if [[ -z "$ARGOCD_PASSWORD" ]]; then
+            echo "Error: ArgoCD password file is empty."
+            exit 1
+        fi
+    else
+        echo "Error: ArgoCD password file not found at $password_file"
+        exit 1
+    fi
+}
 
-replace_placeholders "../gitlab-runner/values.yaml"
-replace_placeholders "$iam-role-path"
-../aws/cloudformation/iam-role.yaml
+# Replace placeholders in yaml files
+replace_placeholders "$IAM_ROLE_TEMPLATE"
+replace_placeholders "$GITLAB_RUNNER_VALUES"
 
 # Deploy CloudFormation stack for IAM roles
 aws cloudformation deploy \
-    --template-file "$iam-role-path" \
+    --template-file "$IAM_ROLE_TEMPLATE" \
     --stack-name eks-service-account-roles \
     --capabilities CAPABILITY_NAMED_IAM
 
@@ -91,6 +109,10 @@ if ! command_exists argocd; then
     echo "Installing ArgoCD CLI..."
     # Add installation command for your OS here
 fi
+
+# Read ArgoCD password from file
+read_argocd_password
+echo "ArgoCD password read from file."
 
 # Login to ArgoCD
 argocd login --insecure --username admin --password $ARGOCD_PASSWORD
