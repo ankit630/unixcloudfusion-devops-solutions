@@ -74,6 +74,20 @@ if [ ${#clusters[@]} -eq 0 ]; then
     exit 1
 fi
 
+# Function to get ArgoCD server URL
+get_argocd_url() {
+    echo "Waiting for ArgoCD LoadBalancer to be ready..."
+    while true; do
+        LB_HOSTNAME=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        if [[ -n "$LB_HOSTNAME" ]]; then
+            echo "ArgoCD server is accessible at: https://$LB_HOSTNAME"
+            break
+        fi
+        echo "Still waiting for LoadBalancer... (This may take a few minutes)"
+        sleep 10
+    done
+}
+
 # If there's only one cluster, use it. Otherwise, prompt for selection.
 if [ ${#clusters[@]} -eq 1 ]; then
     selected_cluster=${clusters[0]}
@@ -124,4 +138,10 @@ kubectl -n argocd create secret generic argocd-secret \
   --from-literal=server.secretkey=$ARGOCD_SESSION_KEY
 
 # Save the admin password somewhere secure
+echo "Saving ArgoCD admin password to argocd-admin-password.txt"
 echo $ARGOCD_PASSWORD > argocd-admin-password.txt
+
+# Get and display the ArgoCD server URL
+get_argocd_url
+
+echo "Setup complete! Please use the password in argocd-admin-password.txt to log in to ArgoCD."
