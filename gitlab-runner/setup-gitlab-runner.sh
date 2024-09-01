@@ -86,7 +86,6 @@ create_or_update_cloudformation_stack() {
     local template_file=$2
     local parameters=$3
 
-    # Check if the stack exists
     if aws cloudformation describe-stacks --stack-name "$stack_name" >/dev/null 2>&1; then
         echo "Stack $stack_name already exists. Updating..."
         if ! aws cloudformation update-stack \
@@ -98,35 +97,42 @@ create_or_update_cloudformation_stack() {
             return
         fi
 
-        # Wait for stack update to complete
         echo "Waiting for stack update to complete..."
         aws cloudformation wait stack-update-complete --stack-name "$stack_name"
     else
         echo "Stack $stack_name does not exist. Creating..."
-        aws cloudformation create-stack \
+        if ! aws cloudformation create-stack \
             --stack-name "$stack_name" \
             --template-body "file://$template_file" \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameters $parameters
+            --parameters $parameters; then
+            echo "Failed to create stack $stack_name. Check the CloudFormation template for errors."
+            return 1
+        fi
 
-        # Wait for stack creation to complete
         echo "Waiting for stack creation to complete..."
         aws cloudformation wait stack-create-complete --stack-name "$stack_name"
     fi
 }
 
-# Create or update CloudFormation stacks
+
 echo "Creating or updating ServiceAccount CloudFormation stack..."
-create_or_update_cloudformation_stack \
+if ! create_or_update_cloudformation_stack \
     "gitlab-runner-service-account" \
     "../aws/cloudformation/gitlab-runner/serviceaccount.yaml" \
-    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"
+    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"; then
+    echo "Failed to create or update ServiceAccount stack. Exiting."
+    exit 1
+fi
 
 echo "Creating or updating IAM Role CloudFormation stack..."
-create_or_update_cloudformation_stack \
+if ! create_or_update_cloudformation_stack \
     "gitlab-runner-role" \
     "../aws/cloudformation/gitlab-runner/gitlab-runner-role.yaml" \
-    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"
+    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"; then
+    echo "Failed to create or update IAM Role stack. Exiting."
+    exit 1
+fi
 
 # Wait for CloudFormation stacks to complete
 echo "Waiting for CloudFormation stacks to complete..."
