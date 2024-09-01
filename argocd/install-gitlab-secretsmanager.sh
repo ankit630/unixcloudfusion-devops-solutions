@@ -62,6 +62,8 @@ echo "AWS Account ID: $AWS_ACCOUNT_ID"
 OIDC_PROVIDER=$(aws eks describe-cluster --name $SELECTED_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 echo "OIDC Provider: $OIDC_PROVIDER"
 
+iam-role-path="../aws/cloudformation/todoapp/iam-role.yaml"
+
 # Function to replace placeholders in yaml files
 replace_placeholders() {
     local file=$1
@@ -75,12 +77,12 @@ replace_placeholders() {
 # Replace placeholders in yaml files
 
 replace_placeholders "../gitlab-runner/values.yaml"
-replace_placeholders "../aws/cloudformation/todoapp/iam-role.yaml"
+replace_placeholders $iam-role-path
 ../aws/cloudformation/iam-role.yaml
 
 # Deploy CloudFormation stack for IAM roles
 aws cloudformation deploy \
-    --template-file ../aws/cloudformation/todoapp/iam-role.yaml \
+    --template-file $iam-role-path \
     --stack-name eks-service-account-roles \
     --capabilities CAPABILITY_NAMED_IAM
 
