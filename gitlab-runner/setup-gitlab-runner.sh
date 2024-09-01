@@ -56,39 +56,65 @@ handle_secret() {
     fi
 }
 
-# Function to create or update IAM Role CloudFormation stack
-create_or_update_iam_role_stack() {
-    local stack_name=$1
-    local template_file=$2
-    local parameters=$3
+# Function to create or update IAM Role using AWS CLI
+create_or_update_iam_role() {
+    local role_name="GitLabRunnerRole"
+    local policy_name="GitLabRunnerPolicy"
 
-    if aws cloudformation describe-stacks --stack-name "$stack_name" >/dev/null 2>&1; then
-        echo "Updating IAM Role stack $stack_name..."
-        if ! aws cloudformation update-stack \
-            --stack-name "$stack_name" \
-            --template-body "file://$template_file" \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --parameters $parameters; then
-            echo "No updates are to be performed on IAM Role stack $stack_name."
-            return 0
-        fi
-
-        echo "Waiting for IAM Role stack update to complete..."
-        aws cloudformation wait stack-update-complete --stack-name "$stack_name"
+    # Check if the role already exists
+    if aws iam get-role --role-name "$role_name" >/dev/null 2>&1; then
+        echo "IAM Role $role_name already exists. Updating..."
     else
-        echo "Creating IAM Role stack $stack_name..."
-        if ! aws cloudformation create-stack \
-            --stack-name "$stack_name" \
-            --template-body "file://$template_file" \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --parameters $parameters; then
-            echo "Failed to create IAM Role stack $stack_name. Check the CloudFormation template for errors."
-            return 1
-        fi
-
-        echo "Waiting for IAM Role stack creation to complete..."
-        aws cloudformation wait stack-create-complete --stack-name "$stack_name"
+        echo "Creating IAM Role $role_name..."
+        aws iam create-role \
+            --role-name "$role_name" \
+            --assume-role-policy-document file://<(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${EKS_CLUSTER_NAME}.oidc.eks.${AWS_REGION}.amazonaws.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "${EKS_CLUSTER_NAME}.oidc.eks.${AWS_REGION}.amazonaws.com:sub": "system:serviceaccount:gitlab-runner:gitlab-runner-sa"
+                }
+            }
+        }
+    ]
+}
+EOF
+)
     fi
+
+    # Create or update the inline policy
+    echo "Creating or updating inline policy $policy_name for role $role_name..."
+    aws iam put-role-policy \
+        --role-name "$role_name" \
+        --policy-name "$policy_name" \
+        --policy-document file://<(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+)
+
+    # Get the role ARN
+    ROLE_ARN=$(aws iam get-role --role-name "$role_name" --query 'Role.Arn' --output text)
+    echo "Role ARN: $ROLE_ARN"
 }
 
 # Function to create or update ServiceAccount using eksctl
@@ -126,22 +152,9 @@ echo
 echo "Handling secret in AWS Secrets Manager..."
 handle_secret
 
-# Create or update IAM Role CloudFormation stack
-echo "Creating or updating IAM Role CloudFormation stack..."
-if ! create_or_update_iam_role_stack \
-    "gitlab-runner-role" \
-    "../aws/cloudformation/gitlab-runner/gitlab-runner-role.yaml" \
-    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"; then
-    echo "Failed to create or update IAM Role stack. Exiting."
-    exit 1
-fi
-
-# Wait for CloudFormation stacks to complete
-echo "Waiting for CloudFormation stacks to complete..."
-aws cloudformation wait stack-create-complete --stack-name gitlab-runner-role
-
-# Get the IAM Role ARN
-ROLE_ARN=$(aws cloudformation describe-stacks --stack-name gitlab-runner-role --query "Stacks[0].Outputs[?OutputKey=='RoleArn'].OutputValue" --output text)
+# Create or update IAM Role using AWS CLI
+echo "Creating or updating IAM Role..."
+create_or_update_iam_role
 
 # Create or update ServiceAccount using eksctl
 echo "Creating or updating ServiceAccount using eksctl..."
