@@ -146,13 +146,16 @@ fi
 # Login to ArgoCD
 argocd login "$ARGOCD_SERVER" --insecure --username admin --password $ARGOCD_PASSWORD
 
+GITOPS_REPO_URL="https://github.com/ankit630/unixcloudfusion-devops-solutions"
+
 # Create ArgoCD applications
 
 argocd app create external-secrets-operator \
-    --repo https://github.com/ankit630/unixcloudfusion-devops-solutions.git \
-    --path external-secrets-operator \
+    --repo https://charts.external-secrets.io \
+    --path external-secrets \
+    --revision v0.9.18 \
     --dest-server https://kubernetes.default.svc \
     --dest-namespace kube-system \
-    --sync-policy automated
+    --values-file-url $GITOPS_REPO_URL/blob/main/external-secrets-operator/values.yaml
 
 echo "Setup complete! ArgoCD is now managing Secret Manager installations."
