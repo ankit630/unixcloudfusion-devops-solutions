@@ -9,6 +9,3 @@ helmCharts:
     releaseName: external-secrets-operator
     valuesFile: values.yaml
     includeCRDs: true
-
-resources:
-  - values.yaml
