@@ -76,10 +76,11 @@ replace_placeholders() {
 
 replace_placeholders "../gitlab-runner/values.yaml"
 replace_placeholders "../aws/cloudformation/todoapp/iam-role.yaml"
+../aws/cloudformation/iam-role.yaml
 
 # Deploy CloudFormation stack for IAM roles
 aws cloudformation deploy \
-    --template-file aws/cloudformation/todoapp/iam-role.yaml \
+    --template-file ../aws/cloudformation/todoapp/iam-role.yaml \
     --stack-name eks-service-account-roles \
     --capabilities CAPABILITY_NAMED_IAM
 
