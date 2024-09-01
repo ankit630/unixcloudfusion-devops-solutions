@@ -65,6 +65,7 @@ echo "OIDC Provider: $OIDC_PROVIDER"
 # Set paths for templates
 IAM_ROLE_TEMPLATE="../aws/cloudformation/todoapp/iam-role.yaml"
 GITLAB_RUNNER_VALUES="../gitlab-runner/values.yaml"
+EXTERNAL_SECRETS_OPERATOR="../external-secrets-operator/values.yaml"
 
 echo "IAM_ROLE_TEMPLATE is set to: $IAM_ROLE_TEMPLATE"
 echo "GITLAB_RUNNER_VALUES is set to: $GITLAB_RUNNER_VALUES"
@@ -97,6 +98,7 @@ read_argocd_password() {
 # Replace placeholders in yaml files
 replace_placeholders "$IAM_ROLE_TEMPLATE"
 replace_placeholders "$GITLAB_RUNNER_VALUES"
+replace_placeholders "$EXTERNAL_SECRETS_OPERATOR"
 
 # Deploy CloudFormation stack for IAM roles
 aws cloudformation deploy \
