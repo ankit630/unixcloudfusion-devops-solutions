@@ -130,7 +130,7 @@ create_or_update_service_account() {
             --cluster="$cluster_name" \
             --namespace="$namespace" \
             --name="$sa_name" \
-            --role-arn="$role_arn" \
+            --attach-role-arn="$role_arn" \
             --override-existing-serviceaccounts \
             --approve
     else
@@ -139,7 +139,7 @@ create_or_update_service_account() {
             --cluster="$cluster_name" \
             --namespace="$namespace" \
             --name="$sa_name" \
-            --role-arn="$role_arn" \
+            --attach-role-arn="$role_arn" \
             --approve
     fi
 }
