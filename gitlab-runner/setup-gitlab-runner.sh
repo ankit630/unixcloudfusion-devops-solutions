@@ -117,6 +117,20 @@ EOF
     echo "Role ARN: $ROLE_ARN"
 }
 
+# Function to check and create IAM OIDC provider
+ensure_iam_oidc_provider() {
+    local cluster_name=$1
+    local region=$2
+
+    echo "Checking for IAM OIDC provider..."
+    if ! eksctl utils associate-iam-oidc-provider --cluster="$cluster_name" --region="$region" --approve --status; then
+        echo "IAM OIDC provider not found. Creating..."
+        eksctl utils associate-iam-oidc-provider --cluster="$cluster_name" --region="$region" --approve
+    else
+        echo "IAM OIDC provider already exists."
+    fi
+}
+
 # Function to create or update ServiceAccount using eksctl
 create_or_update_service_account() {
     local cluster_name=$1
@@ -151,6 +165,10 @@ echo
 # Handle secret in AWS Secrets Manager
 echo "Handling secret in AWS Secrets Manager..."
 handle_secret
+
+# Ensure IAM OIDC provider exists
+echo "Ensuring IAM OIDC provider exists..."
+ensure_iam_oidc_provider "$EKS_CLUSTER_NAME" "$AWS_REGION"
 
 # Create or update IAM Role using AWS CLI
 echo "Creating or updating IAM Role..."
