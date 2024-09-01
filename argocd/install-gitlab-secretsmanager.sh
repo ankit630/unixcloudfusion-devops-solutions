@@ -122,15 +122,8 @@ install_argocd_cli() {
 # Function to check and install ArgoCD CLI if needed
 check_argocd_cli() {
     if ! command -v argocd &> /dev/null; then
-        echo "ArgoCD CLI is not installed."
-        read -p "Do you want to install ArgoCD CLI? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            install_argocd_cli
-        else
-            echo "ArgoCD CLI is required but not installed. Exiting."
-            exit 1
-        fi
+        echo "ArgoCD CLI is not installed. Installing now..."
+        install_argocd_cli
     else
         echo "ArgoCD CLI is already installed."
     fi
@@ -143,8 +136,15 @@ check_argocd_cli
 read_argocd_password
 echo "ArgoCD password read from file."
 
+# Get ArgoCD server URL
+ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+if [[ -z "$ARGOCD_SERVER" ]]; then
+    echo "Error: Unable to get ArgoCD server URL. Please make sure ArgoCD is properly installed and the service is exposed."
+    exit 1
+fi
+
 # Login to ArgoCD
-argocd login --insecure --username admin --password $ARGOCD_PASSWORD
+argocd login "$ARGOCD_SERVER" --insecure --username admin --password $ARGOCD_PASSWORD
 
 # Create ArgoCD applications
 argocd app create gitlab-runner \
