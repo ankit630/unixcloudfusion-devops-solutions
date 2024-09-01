@@ -104,6 +104,29 @@ else
     done
 fi
 
+enable_helm_in_argocd() {
+    echo "Enabling Helm in ArgoCD ConfigMap..."
+    kubectl patch configmap argocd-cm -n argocd --type merge -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to update ArgoCD ConfigMap"
+        exit 1
+    fi
+
+    echo "Restarting ArgoCD application controller..."
+    kubectl rollout restart deployment argocd-application-controller -n argocd
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to restart ArgoCD application controller"
+        exit 1
+    fi
+
+    echo "Waiting for ArgoCD application controller to restart..."
+    kubectl rollout status deployment argocd-application-controller -n argocd
+    if [ $? -ne 0 ]; then
+        echo "Error: ArgoCD application controller failed to restart"
+        exit 1
+    fi
+}
+
 # Update kubeconfig for the selected cluster
 echo "Updating kubeconfig for cluster: $selected_cluster"
 update_kubeconfig "$selected_cluster"
@@ -121,6 +144,15 @@ echo "Applying ArgoCD Kustomization..."
 kubectl kustomize --enable-helm | kubectl apply -f -
 
 echo "ArgoCD installation complete!"
+
+# Apply ArgoCD Kustomization
+echo "Applying ArgoCD Kustomization..."
+kubectl kustomize --enable-helm | kubectl apply -f -
+
+echo "ArgoCD installation complete!"
+
+# Enable Helm in ArgoCD
+enable_helm_in_argocd
 
 # Patch ArgoCD server to use LoadBalancer type (for easy access)
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
