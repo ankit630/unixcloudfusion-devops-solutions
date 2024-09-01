@@ -110,6 +110,35 @@ if ! command_exists argocd; then
     # Add installation command for your OS here
 fi
 
+# Function to install ArgoCD CLI
+install_argocd_cli() {
+    echo "Installing ArgoCD CLI..."
+    curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+    sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+    rm argocd-linux-amd64
+    echo "ArgoCD CLI installed successfully."
+}
+
+# Function to check and install ArgoCD CLI if needed
+check_argocd_cli() {
+    if ! command -v argocd &> /dev/null; then
+        echo "ArgoCD CLI is not installed."
+        read -p "Do you want to install ArgoCD CLI? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_argocd_cli
+        else
+            echo "ArgoCD CLI is required but not installed. Exiting."
+            exit 1
+        fi
+    else
+        echo "ArgoCD CLI is already installed."
+    fi
+}
+
+# Check and install ArgoCD CLI if needed
+check_argocd_cli
+
 # Read ArgoCD password from file
 read_argocd_password
 echo "ArgoCD password read from file."
