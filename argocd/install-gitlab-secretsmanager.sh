@@ -148,9 +148,9 @@ argocd login "$ARGOCD_SERVER" --insecure --username admin --password $ARGOCD_PAS
 
 # Create ArgoCD applications
 
-argocd app create secret-manager \
+argocd app create external-secrets-operator \
     --repo https://github.com/ankit630/unixcloudfusion-devops-solutions.git \
-    --path secret-manager \
+    --path external-secrets-operator \
     --dest-server https://kubernetes.default.svc \
     --dest-namespace kube-system \
     --sync-policy automated

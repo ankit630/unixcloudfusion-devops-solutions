@@ -1,0 +1,12 @@
+kind: Kustomization
+
+helmCharts:
+  - repo: https://charts.external-secrets.io
+    name: external-secrets
+    namespace: kube-system
+    version: v0.9.18
+    releaseName: external-secrets-operator
+    valuesFile: values.yaml
+    includeCRDs: true
+    apiVersions:
+      - monitoring.coreos.com/v1
