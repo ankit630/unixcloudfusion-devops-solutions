@@ -74,8 +74,8 @@ replace_placeholders() {
 
 # Replace placeholders in yaml files
 
-replace_placeholders "gitlab-runner/values.yaml"
-replace_placeholders "aws/cloudformation/todoapp/iam-role.yaml"
+replace_placeholders "../gitlab-runner/values.yaml"
+replace_placeholders "../aws/cloudformation/todoapp/iam-role.yaml"
 
 # Deploy CloudFormation stack for IAM roles
 aws cloudformation deploy \
