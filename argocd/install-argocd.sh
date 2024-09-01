@@ -45,6 +45,7 @@ get_eks_clusters() {
 update_kubeconfig() {
     local cluster_name=$1
     aws eks update-kubeconfig --name "$cluster_name"
+    export EKS_CLUSTER_NAME="$cluster_name"
 }
 
 # Function to test kubectl connection

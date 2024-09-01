@@ -20,7 +20,7 @@ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "AWS Account ID: $AWS_ACCOUNT_ID"
 
 # Get OIDC Provider URL
-OIDC_PROVIDER=$(aws eks describe-cluster --name your-cluster-name --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
+OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 echo "OIDC Provider: $OIDC_PROVIDER"
 
 # Function to replace placeholders in yaml files
