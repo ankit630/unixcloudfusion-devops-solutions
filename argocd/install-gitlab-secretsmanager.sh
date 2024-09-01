@@ -151,11 +151,10 @@ GITOPS_REPO_URL="https://github.com/ankit630/unixcloudfusion-devops-solutions"
 # Create ArgoCD applications
 
 argocd app create external-secrets-operator \
-    --repo https://charts.external-secrets.io \
-    --path external-secrets \
-    --revision v0.9.18 \
+    --repo $GITOPS_REPO_URL \
+    --path external-secrets-operator \
     --dest-server https://kubernetes.default.svc \
     --dest-namespace kube-system \
-    --values-file-url $GITOPS_REPO_URL/blob/main/external-secrets-operator/values.yaml
+    --sync-policy automated
 
 echo "Setup complete! ArgoCD is now managing Secret Manager installations."
