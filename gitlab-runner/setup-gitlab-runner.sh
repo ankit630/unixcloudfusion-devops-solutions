@@ -40,28 +40,45 @@ echo "GitLab URL: $GITLAB_URL"
 read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
 echo
 
-# Function to create or update secret in AWS Secrets Manager
-create_or_update_secret() {
+# Function to handle AWS Secrets Manager secret
+handle_secret() {
     local secret_name="gitlab/gitlab-runner-secrets"
-    local secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
+    local new_secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
 
+    # Check if the secret exists
     if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
-        echo "Secret already exists. Updating..."
-        aws secretsmanager update-secret \
-            --secret-id "$secret_name" \
-            --secret-string "$secret_string"
+        echo "Secret already exists. Checking if update is needed..."
+        
+        # Get the current secret value
+        local current_secret_string=$(aws secretsmanager get-secret-value --secret-id "$secret_name" --query SecretString --output text)
+        
+        # Compare current and new secret strings
+        if [ "$current_secret_string" = "$new_secret_string" ]; then
+            echo "Secret is up to date. No changes needed."
+        else
+            echo "Secret content has changed. Updating..."
+            aws secretsmanager update-secret \
+                --secret-id "$secret_name" \
+                --secret-string "$new_secret_string"
+        fi
     else
-        echo "Creating new secret..."
+        echo "Secret does not exist. Creating new secret..."
         aws secretsmanager create-secret \
             --name "$secret_name" \
             --description "GitLab Runner secrets" \
-            --secret-string "$secret_string"
+            --secret-string "$new_secret_string"
     fi
 }
 
-# Create or update secret in AWS Secrets Manager
-echo "Creating or updating secret in AWS Secrets Manager..."
-create_or_update_secret
+# [Previous variable definitions and user prompts remain unchanged]
+
+# Prompt user for GitLab Runner token
+read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
+echo
+
+# Handle secret in AWS Secrets Manager
+echo "Handling secret in AWS Secrets Manager..."
+handle_secret
 
 # Apply CloudFormation stacks
 echo "Creating ServiceAccount CloudFormation stack..."
