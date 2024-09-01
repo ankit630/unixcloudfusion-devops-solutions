@@ -80,18 +80,53 @@ echo
 echo "Handling secret in AWS Secrets Manager..."
 handle_secret
 
-# Apply CloudFormation stacks
-echo "Creating ServiceAccount CloudFormation stack..."
-aws cloudformation create-stack --stack-name gitlab-runner-service-account \
-    --template-body file://../aws/cloudformation/gitlab-runner/serviceaccount.yaml \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameters ParameterKey=EksClusterName,ParameterValue=${EKS_CLUSTER_NAME}
+# Function to create or update CloudFormation stack
+create_or_update_cloudformation_stack() {
+    local stack_name=$1
+    local template_file=$2
+    local parameters=$3
 
-echo "Creating IAM Role CloudFormation stack..."
-aws cloudformation create-stack --stack-name gitlab-runner-role \
-    --template-body file://../aws/cloudformation/gitlab-runner/gitlab-runner-role.yaml \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameters ParameterKey=EksClusterName,ParameterValue=${EKS_CLUSTER_NAME}
+    # Check if the stack exists
+    if aws cloudformation describe-stacks --stack-name "$stack_name" >/dev/null 2>&1; then
+        echo "Stack $stack_name already exists. Updating..."
+        if ! aws cloudformation update-stack \
+            --stack-name "$stack_name" \
+            --template-body "file://$template_file" \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameters $parameters; then
+            echo "No updates are to be performed on stack $stack_name."
+            return
+        fi
+
+        # Wait for stack update to complete
+        echo "Waiting for stack update to complete..."
+        aws cloudformation wait stack-update-complete --stack-name "$stack_name"
+    else
+        echo "Stack $stack_name does not exist. Creating..."
+        aws cloudformation create-stack \
+            --stack-name "$stack_name" \
+            --template-body "file://$template_file" \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameters $parameters
+
+        # Wait for stack creation to complete
+        echo "Waiting for stack creation to complete..."
+        aws cloudformation wait stack-create-complete --stack-name "$stack_name"
+    fi
+}
+
+# Create or update CloudFormation stacks
+echo "Creating or updating ServiceAccount CloudFormation stack..."
+create_or_update_cloudformation_stack \
+    "gitlab-runner-service-account" \
+    "../aws/cloudformation/gitlab-runner/serviceaccount.yaml" \
+    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"
+
+echo "Creating or updating IAM Role CloudFormation stack..."
+create_or_update_cloudformation_stack \
+    "gitlab-runner-role" \
+    "../aws/cloudformation/gitlab-runner/gitlab-runner-role.yaml" \
+    "ParameterKey=EksClusterName,ParameterValue=$EKS_CLUSTER_NAME"
 
 # Wait for CloudFormation stacks to complete
 echo "Waiting for CloudFormation stacks to complete..."
