@@ -119,8 +119,8 @@ create_or_update_iam_role() {
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringEquals": {
-                    "${EKS_CLUSTER_NAME}.oidc.eks.${AWS_REGION}.amazonaws.com:sub": "system:serviceaccount:gitlab-runner:gitlab-runner-sa",
-                    "${EKS_CLUSTER_NAME}.oidc.eks.${AWS_REGION}.amazonaws.com:aud": "sts.amazonaws.com"
+                    "${OIDC_PROVIDER}:sub": "system:serviceaccount:gitlab-runner:gitlab-runner-sa",
+                    "${OIDC_PROVIDER}:aud": "sts.amazonaws.com"
                 }
             }
         }
@@ -146,7 +146,7 @@ EOF
                 "secretsmanager:DescribeSecret",
                 "secretsmanager:ListSecrets"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:gitlab/gitlab-runner-secrets*"
         }
     ]
 }
