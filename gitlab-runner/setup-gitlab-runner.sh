@@ -207,6 +207,18 @@ create_or_update_iam_role
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
 
+# Get the AWS Account ID
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+
+# Create or update the ConfigMap
+kubectl create configmap gitlab-runner-config \
+    --from-literal=aws-account-id=$AWS_ACCOUNT_ID \
+    --from-literal=role-arn="arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitlabRunnerServiceAccountRole" \
+    -n gitlab-runner \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID"
+
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
 kubectl apply -f ../argocd-apps/gitlab-runner-app.yaml
