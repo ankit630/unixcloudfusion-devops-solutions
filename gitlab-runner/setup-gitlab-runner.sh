@@ -36,6 +36,37 @@ echo "EKS Cluster Name: $EKS_CLUSTER_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "GitLab URL: $GITLAB_URL"
 
+# Function to check and install eksctl
+ensure_eksctl() {
+    if ! command -v eksctl &> /dev/null; then
+        echo "eksctl not found. Installing..."
+        # For Linux
+        if [[ "$(uname)" == "Linux" ]]; then
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+        # For macOS
+        elif [[ "$(uname)" == "Darwin" ]]; then
+            brew tap weaveworks/tap
+            brew install weaveworks/tap/eksctl
+        else
+            echo "Unsupported operating system. Please install eksctl manually."
+            exit 1
+        fi
+    fi
+    echo "eksctl version: $(eksctl version)"
+}
+
+check_requirements() {
+    local required_tools=("aws" "kubectl" "helm")
+    for tool in "${required_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            echo "Error: $tool is required but not installed. Please install it and try again."
+            exit 1
+        fi
+    done
+    echo "All required tools are installed."
+}
+
 # Function to handle AWS Secrets Manager secret
 handle_secret() {
     local secret_name="gitlab/gitlab-runner-secrets"
@@ -163,6 +194,12 @@ create_or_update_service_account() {
 # Prompt user for GitLab Runner token
 read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
 echo
+
+# Ensure eksctl is installed
+ensure_eksctl
+
+# Check for required tools
+check_requirements
 
 # Handle secret in AWS Secrets Manager
 echo "Handling secret in AWS Secrets Manager..."
