@@ -176,7 +176,7 @@ sessionServer:
   #   - 1.2.3.4/32
 
   #Valid values: ClusterIP, Headless, NodePort, LoadBalancer
-  serviceType: LoadBalancer
+  # serviceType: LoadBalancer
 
 ## For RBAC support:
 rbac:
@@ -225,7 +225,7 @@ rbac:
   ## DEPRECATED: Please use `serviceAccount.annotations` instead
   ##
   serviceAccountAnnotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/GitlabRunnerServiceAccountRole
+    eks.amazonaws.com/role-arn: arn:aws:iam::891377343662:role/GitLabRunnerRole
 
   ## Use podSecurity Policy
   ## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
