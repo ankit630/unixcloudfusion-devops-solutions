@@ -87,6 +87,14 @@ handle_secret() {
     fi
 }
 
+# Get the OIDC provider URL
+OIDC_PROVIDER=$(aws eks describe-cluster --name dev-cluster --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
+echo "OIDC Provider: $OIDC_PROVIDER"
+
+# Get the AWS account ID
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+echo "AWS Account ID: $AWS_ACCOUNT_ID"
+
 # Function to create or update IAM Role using AWS CLI
 create_or_update_iam_role() {
     local role_name="GitLabRunnerRole"
@@ -106,7 +114,7 @@ create_or_update_iam_role() {
         {
             "Effect": "Allow",
             "Principal": {
-                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${EKS_CLUSTER_NAME}.oidc.eks.${AWS_REGION}.amazonaws.com"
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
             },
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
