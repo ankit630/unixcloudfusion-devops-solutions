@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "ecr" {
-  source = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/ecr?ref=v1.0.0"
+  source = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/ecr?ref=v1.0.1"
   
   repository_name = var.repository_name
 }
