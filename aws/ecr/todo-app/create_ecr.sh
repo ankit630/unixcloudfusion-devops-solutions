@@ -69,9 +69,6 @@ fi
 # Change to the directory containing this script
 cd "$(dirname "$0")"
 
-# Run the Terraform backend setup script
-../../../setup_terraform/scripts/setup_terraform_backend.sh
-
 # Copy the backend configuration
 cp ../../../setup_terraform/backend.tf .
 
