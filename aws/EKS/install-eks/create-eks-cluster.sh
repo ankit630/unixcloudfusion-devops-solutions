@@ -28,6 +28,10 @@ CLUSTER_NAME="dev-cluster"
 REGION="us-east-1"
 eksctl create cluster --name $CLUSTER_NAME --version 1.30 --region $REGION --nodegroup-name standard-workers --node-type t3.micro --nodes 8 --nodes-min 1 --nodes-max 8 --managed --with-oidc
 
+# After creating the cluster
+echo "Installing/Updating VPC CNI addon..."
+eksctl create addon --name vpc-cni --version latest --cluster $CLUSTER_NAME --force
+
 # Step 5: Update kubeconfig to connect to the new EKS cluster
 aws eks update-kubeconfig --name $CLUSTER_NAME --region $REGION
 
