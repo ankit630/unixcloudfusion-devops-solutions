@@ -18,8 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-  hooks:
-    - name: update-efs-config
-      hook: PreSync
-      command: ["/bin/sh", "-c"]
-      args: ["./update-efs-config.sh"]
