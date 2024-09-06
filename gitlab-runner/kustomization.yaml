@@ -3,7 +3,7 @@ resources:
 - "./resources/externalsecret.yaml"
 - "./resources/aws-secretstore.yaml"
 - "./resources/gitlab-runner-config.yaml" 
-- "./efs-provisioner.yaml"
+- "./resources/efs-provisioner.yaml"
 
 
 helmCharts:
