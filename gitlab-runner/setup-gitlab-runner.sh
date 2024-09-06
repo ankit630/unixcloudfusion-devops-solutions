@@ -21,7 +21,7 @@ get_aws_region() {
 # Function to get GitLab URL
 get_gitlab_url() {
     # This is a placeholder. You might want to store this in a config file or environment variable.
-    echo "https://gitlab.your-domain.com"
+    echo "https://gitlab.com"
 }
 
 # Get variables dynamically
@@ -61,8 +61,28 @@ check_requirements() {
     local required_tools=("aws" "kubectl" "helm")
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
-            echo "Error: $tool is required but not installed. Please install it and try again."
-            exit 1
+            echo "$tool is not installed. Attempting to install..."
+            case $tool in
+                aws)
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip awscliv2.zip
+                    sudo ./aws/install
+                    rm -rf aws awscliv2.zip
+                    ;;
+                kubectl)
+                    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                    chmod +x kubectl
+                    sudo mv kubectl /usr/local/bin/
+                    ;;
+                helm)
+                    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+                    ;;
+            esac
+            
+            if ! command -v "$tool" &> /dev/null; then
+                echo "Error: Failed to install $tool. Please install it manually and try again."
+                exit 1
+            fi
         fi
     done
     echo "All required tools are installed."
