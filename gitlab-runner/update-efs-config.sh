@@ -1,13 +1,26 @@
 #!/bin/bash
 
-# Get the EFS ID
+set -e
+
+# Fetch the EFS ID
 EFS_ID=$(aws efs describe-file-systems --query "FileSystems[0].FileSystemId" --output text)
 
-# Replace the placeholder in the efs-provisioner.yaml file
-sed -i "s/\${EFS_ID}/$EFS_ID/" efs-provisioner.yaml
+if [ -z "$EFS_ID" ]; then
+    echo "Error: No EFS file system found."
+    exit 1
+fi
 
-# Apply the changes using kubectl
-kubectl apply -f efs-provisioner.yaml
+# Generate the ConfigMap YAML
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: efs-config
+  namespace: gitlab-runner
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  EFS_ID: $EFS_ID
+EOF
 
-# Trigger ArgoCD to sync the changes
-argocd app sync gitlab-runner
+echo "ConfigMap updated with EFS ID: $EFS_ID"

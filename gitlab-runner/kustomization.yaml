@@ -5,6 +5,14 @@ resources:
 - "./resources/gitlab-runner-config.yaml" 
 - "./resources/efs-provisioner.yaml"
 
+vars:
+- name: EFS_ID
+  objref:
+    kind: ConfigMap
+    name: efs-config
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.EFS_ID
 
 helmCharts:
   - repo: https://charts.gitlab.io
