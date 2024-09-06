@@ -405,6 +405,14 @@ runners:
         cpu_limit = "1"
         memory_limit = "2Gi"
         poll_timeout = 1200
+        volumes = [
+          "/var/run/docker.sock:/var/run/docker.sock",
+          "/cache"
+        ]
+        [runners.kubernetes.volumes]
+          [[runners.kubernetes.volumes.pvc]]
+            name = "gitlab-runner-efs-pvc"
+            mount_path = "/gitlab"
 
   ## Absolute path for an existing runner configuration file
   ## Can be used alongside "volumes" and "volumeMounts" to use an external config file
