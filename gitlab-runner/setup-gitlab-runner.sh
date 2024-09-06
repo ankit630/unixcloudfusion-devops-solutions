@@ -36,9 +36,6 @@ echo "EKS Cluster Name: $EKS_CLUSTER_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "GitLab URL: $GITLAB_URL"
 
-# Check for required tools
-check_requirements
-
 
 # Function to check and install eksctl
 ensure_eksctl() {
@@ -70,6 +67,9 @@ check_requirements() {
     done
     echo "All required tools are installed."
 }
+
+# Check for required tools
+check_requirements
 
 # Function to handle AWS Secrets Manager secret
 handle_secret() {
