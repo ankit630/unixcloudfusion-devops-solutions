@@ -26,19 +26,7 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs to apply to the mount targets"
-  type        = list(string)
-}
-
 variable "vpc_id" {
   description = "ID of the VPC where EFS will be created"
   type        = string
 }
-
-variable "create_security_group_rule" {
-  description = "Whether to create the security group rule"
-  type        = bool
-  default     = true
-}
-

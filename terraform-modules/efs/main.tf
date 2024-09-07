@@ -6,26 +6,37 @@ resource "aws_efs_file_system" "this" {
     transition_to_ia = var.transition_to_ia
   }
 
-  tags = merge(var.tags, {
-    Name = var.creation_token
-  })
+  tags = var.tags
 }
 
 resource "aws_efs_mount_target" "this" {
-  count           = length(var.subnet_ids)
+  for_each = toset(var.subnet_ids)
+
   file_system_id  = aws_efs_file_system.this.id
-  subnet_id       = var.subnet_ids[count.index]
-  security_groups = var.security_group_ids
+  subnet_id       = each.value
+  security_groups = [aws_security_group.efs.id]
 }
 
-resource "aws_security_group_rule" "efs_inbound" {
-  count             = var.create_security_group_rule ? 1 : 0
-  type              = "ingress"
-  from_port         = 2049
-  to_port           = 2049
-  protocol          = "tcp"
-  cidr_blocks       = [data.aws_vpc.this.cidr_block]
-  security_group_id = var.security_group_ids[0]
+resource "aws_security_group" "efs" {
+  name        = "efs-security-group-${var.creation_token}"
+  description = "Security group for EFS ${var.creation_token}"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.this.cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = var.tags
 }
 
 data "aws_vpc" "this" {
