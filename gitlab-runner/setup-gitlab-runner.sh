@@ -236,13 +236,29 @@ echo "EFS ID: $EFS_ID"
 echo "AWS ACCOUNT ID: $AWS_ACCOUNT_ID"
 
 
-# Create or update the ConfigMap with actual values
-kubectl create configmap gitlab-runner-config \
-    --from-literal=aws-account-id="$AWS_ACCOUNT_ID" \
-    --from-literal=efs-id="$EFS_ID" \
-    --from-literal=role-arn="arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitlabRunnerServiceAccountRole" \
-    -n gitlab-runner \
-    --dry-run=client -o yaml | kubectl apply -f -
+# Ensure the script is run with the necessary variables
+if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$EFS_ID" ]; then
+  echo "Error: AWS_ACCOUNT_ID and EFS_ID must be set."
+  exit 1
+fi
+
+# Define the ConfigMap name and namespace
+CONFIGMAP_NAME="gitlab-runner-config"
+NAMESPACE="gitlab-runner"
+TARGET_DIR="resources"
+
+# Create the configmap.yaml file
+cat <<EOF > $TARGET_DIR/gitlab-runner-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${CONFIGMAP_NAME}
+  namespace: ${NAMESPACE}
+data:
+  aws-account-id: "${AWS_ACCOUNT_ID}"
+  efs-id: "${EFS_ID}"
+  role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitlabRunnerServiceAccountRole"
+EOF
 
 echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID , EFS: $EFS_ID"
 
