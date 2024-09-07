@@ -13,3 +13,21 @@ helmCharts:
     namespace: gitlab-runner
     valuesFile: values.yaml
     includeCRDs: true
+
+patches:
+- target:
+    kind: HelmChart
+    name: gitlab-runner
+  patch: |-
+    - op: replace
+      path: /spec/values/rbac/serviceAccountAnnotations/eks.amazonaws.com~1role-arn
+      value: arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitLabRunnerRole
+
+vars:
+  - name: AWS_ACCOUNT_ID
+    objref:
+      kind: ExternalSecret
+      name: gitlab-runner-secret
+      apiVersion: external-secrets.io/v1beta1
+    fieldref:
+      fieldpath: data.aws-account-id

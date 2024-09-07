@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pre-sync-secret-update
+  name: pre-sync-efs-setup
   annotations:
     argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
@@ -17,14 +17,54 @@ spec:
         - -c
         - |
           EFS_ID=$(kubectl get secret gitlab-runner-secret -n gitlab-runner -o jsonpath='{.data.efs-id}' | base64 -d)
-          AWS_ACCOUNT_ID=$(kubectl get secret gitlab-runner-secret -n gitlab-runner -o jsonpath='{.data.aws-account-id}' | base64 -d)
           
-          # Update StorageClass
-          kubectl patch storageclass efs-sc --type='json' -p="[{'op': 'replace', 'path': '/parameters/fileSystemId', 'value':'$EFS_ID'}]"
+          # Create StorageClass
+          cat <<EOF | kubectl apply -f -
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: efs-sc
+          provisioner: efs.csi.aws.com
+          parameters:
+            provisioningMode: efs-ap
+            fileSystemId: $EFS_ID
+            directoryPerms: "700"
+            gidRangeStart: "1000"
+            gidRangeEnd: "2000"
+          EOF
           
-          # Update HelmRelease
-          kubectl patch helmrelease gitlab-runner -n gitlab-runner --type='json' -p="[
-            {'op': 'replace', 'path': '/spec/values/rbac/serviceAccountAnnotations/eks.amazonaws.com~1role-arn', 'value':'arn:aws:iam::$AWS_ACCOUNT_ID:role/GitLabRunnerRole'},
-            {'op': 'replace', 'path': '/spec/values/runners/config', 'value':'[[runners]]\n  [runners.kubernetes]\n    namespace = \"{{.Release.Namespace}}\"\n    image = \"ubuntu:20.04\"\n    service_account = \"{{ .Values.rbac.serviceAccountName }}\"\n    cpu_limit = \"1\"\n    memory_limit = \"2Gi\"\n    poll_timeout = 1200\n    volumes = [\"/var/run/docker.sock:/var/run/docker.sock\", \"/cache\"]\n    [runners.kubernetes.volumes]\n      [[runners.kubernetes.volumes.pvc]]\n        name = \"gitlab-runner-efs-pvc\"\n        claim_name = \"gitlab-runner-efs-pvc\"\n        mount_path = \"/gitlab\"\n    efs_id = \"$EFS_ID\"'}
-          ]"
+          # Create PersistentVolume
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: gitlab-runner-efs-pv
+          spec:
+            capacity:
+              storage: 5Gi
+            volumeMode: Filesystem
+            accessModes:
+              - ReadWriteMany
+            persistentVolumeReclaimPolicy: Retain
+            storageClassName: efs-sc
+            csi:
+              driver: efs.csi.aws.com
+              volumeHandle: $EFS_ID
+          EOF
+          
+          # Create PersistentVolumeClaim
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: gitlab-runner-efs-pvc
+            namespace: gitlab-runner
+          spec:
+            accessModes:
+              - ReadWriteMany
+            storageClassName: efs-sc
+            resources:
+              requests:
+                storage: 5Gi
+          EOF
       restartPolicy: OnFailure
