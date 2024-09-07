@@ -120,7 +120,7 @@ enable_helm_in_argocd() {
     fi
 
     echo "Waiting for ArgoCD application controller to restart..."
-    kubectl rollout restart deployment argocd-applicationset-controller -n argocd
+    sleep 10
     if [ $? -ne 0 ]; then
         echo "Error: ArgoCD application controller failed to restart"
         exit 1

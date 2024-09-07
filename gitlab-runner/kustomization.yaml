@@ -12,30 +12,3 @@ helmCharts:
     namespace: gitlab-runner
     valuesFile: values.yaml
     includeCRDs: true
-
-# this is to handle the account id for the annotation to assume role by gitlab runner
-# this is not required if bash script not used and you can update annotation in values.yaml file and efs-id
-# gitlab-runner-config is created by shell script to fetch value
-# if not using script you can remove this part and hardcode values based on your env
-
-replacements:
-  - source:
-      kind: ConfigMap
-      name: gitlab-runner-config
-      fieldPath: data.role-arn
-    targets:
-      - select:
-          kind: HelmChart
-          name: gitlab-runner
-        fieldPaths:
-          - spec.values.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn
-  - source:
-      kind: ConfigMap
-      name: gitlab-runner-config
-      fieldPath: data.efs-id
-    targets:
-      - select:
-          kind: StorageClass
-          name: efs-sc
-        fieldPaths:
-          - parameters.fileSystemId

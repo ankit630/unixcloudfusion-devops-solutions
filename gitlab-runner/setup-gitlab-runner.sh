@@ -34,6 +34,11 @@ echo "EKS Cluster Name: $EKS_CLUSTER_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "GitLab URL: $GITLAB_URL"
 
+# Set up EFS configuration
+echo "Setting up EFS configuration..."
+EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
+AWS_ACCOUNT_ID=$(get_aws_account_id)
+
 # Function to check and install eksctl
 ensure_eksctl() {
     if ! command -v eksctl &> /dev/null; then
@@ -89,7 +94,7 @@ check_requirements
 # Function to handle AWS Secrets Manager secret
 handle_secret() {
     local secret_name="gitlab/gitlab-runner-secrets"
-    local new_secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
+    local new_secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\",\"aws-account-id\":\"$AWS_ACCOUNT_ID\",\"efs-id\":\"$EFS_ID\"}"
 
     if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
         echo "Secret already exists. Checking if update is needed..."
@@ -218,47 +223,6 @@ create_or_update_iam_role
 # Create or update ServiceAccount using eksctl
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
-
-# Set up EFS configuration
-echo "Setting up EFS configuration..."
-EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
-
-if [ -z "$EFS_ID" ]; then
-    echo "Error: No EFS file system found with the tag Project=gitlab-runner."
-    exit 1
-fi
-
-# Export EFS_ID as an environment variable
-export AWS_ACCOUNT_ID
-export EFS_ID
-echo "EFS ID: $EFS_ID"
-echo "EFS ID: $EFS_ID"
-echo "AWS ACCOUNT ID: $AWS_ACCOUNT_ID"
-
-
-# Ensure the script is run with the necessary variables
-if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$EFS_ID" ]; then
-  echo "Error: AWS_ACCOUNT_ID and EFS_ID must be set."
-  exit 1
-fi
-
-# Define the ConfigMap name and namespace
-CONFIGMAP_NAME="gitlab-runner-config"
-NAMESPACE="gitlab-runner"
-TARGET_DIR="resources"
-
-# Create the configmap.yaml file
-cat <<EOF > $TARGET_DIR/gitlab-runner-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ${CONFIGMAP_NAME}
-  namespace: ${NAMESPACE}
-data:
-  aws-account-id: "${AWS_ACCOUNT_ID}"
-  efs-id: "${EFS_ID}"
-  role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitlabRunnerServiceAccountRole"
-EOF
 
 echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID , EFS: $EFS_ID"
 
