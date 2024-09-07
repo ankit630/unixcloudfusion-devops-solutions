@@ -9,6 +9,8 @@ spec:
     repoURL: https://github.com/ankit630/unixcloudfusion-devops-solutions
     targetRevision: HEAD
     path: gitlab-runner
+    kustomize:
+      namespace: gitlab-runner
   destination:
     server: https://kubernetes.default.svc
     namespace: gitlab-runner

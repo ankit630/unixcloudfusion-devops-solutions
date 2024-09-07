@@ -200,25 +200,6 @@ create_or_update_service_account() {
     fi
 }
 
-# Function to set up EFS configuration
-setup_efs_config() {
-    # Fetch the EFS ID based on the Project tag
-    EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
-
-    if [ -z "$EFS_ID" ]; then
-        echo "Error: No EFS file system found with the tag Project=gitlab-runner."
-        exit 1
-    fi
-
-    # Update the ConfigMap with the EFS ID
-    kubectl create configmap efs-config \
-        --from-literal=EFS_ID=$EFS_ID \
-        -n gitlab-runner \
-        --dry-run=client -o yaml | kubectl apply -f -
-
-    echo "ConfigMap updated with EFS ID: $EFS_ID"
-}
-
 # Prompt user for GitLab Runner token
 read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
 echo
@@ -238,32 +219,17 @@ create_or_update_iam_role
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
 
- # Function to wait for PVC to be bound
- wait_for_pvc() {
-   local pvc_name="$1"
-   local namespace="$2"
-   local timeout=300
-   local interval=10
-   local elapsed=0
- 
-   while [ $elapsed -lt $timeout ]; do
-     status=$(kubectl get pvc "$pvc_name" -n "$namespace" -o jsonpath='{.status.phase}' 2>/dev/null)
-     if [ "$status" = "Bound" ]; then
-       echo "PVC $pvc_name is now bound."
-       return 0
-     fi
-     echo "Waiting for PVC $pvc_name to be bound... (${elapsed}s)"
-     sleep $interval
-     elapsed=$((elapsed + interval))
-   done
- 
-   echo "Timeout waiting for PVC $pvc_name to be bound."
-   return 1
- }
-
 # Set up EFS configuration
 echo "Setting up EFS configuration..."
-setup_efs_config
+EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
+
+if [ -z "$EFS_ID" ]; then
+    echo "Error: No EFS file system found with the tag Project=gitlab-runner."
+    exit 1
+fi
+
+# Export EFS_ID as an environment variable
+export EFS_ID
 
 # Create or update the ConfigMap
 kubectl create configmap gitlab-runner-config \
