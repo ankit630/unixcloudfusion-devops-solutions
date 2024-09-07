@@ -3,7 +3,7 @@ resources:
 - "./resources/externalsecret.yaml"
 - "./resources/aws-secretstore.yaml" 
 - "./resources/efs-provisioner.yaml"
-- "./resources/post-sync-job.yaml"
+- "./resources/pre-sync-job.yaml"
 
 helmCharts:
   - repo: https://charts.gitlab.io
