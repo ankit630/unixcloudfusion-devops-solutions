@@ -46,6 +46,26 @@ ensure_eksctl() {
     echo "eksctl version: $(eksctl version)"
 }
 
+# Function to handle AWS Secrets Manager secret
+handle_secret() {
+    local secret_name="gitlab/gitlab-runner-secrets"
+    local new_secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\"}"
+
+    if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
+        echo "Secret already exists. Checking if update is needed..."
+        local current_secret_string=$(aws secretsmanager get-secret-value --secret-id "$secret_name" --query SecretString --output text)
+        if [ "$current_secret_string" != "$new_secret_string" ]; then
+            echo "Updating secret..."
+            aws secretsmanager update-secret --secret-id "$secret_name" --secret-string "$new_secret_string"
+        else
+            echo "Secret is up to date. No changes needed."
+        fi
+    else
+        echo "Creating new secret..."
+        aws secretsmanager create-secret --name "$secret_name" --description "GitLab Runner secrets" --secret-string "$new_secret_string"
+    fi
+}
+
 check_requirements() {
     local required_tools=("aws" "kubectl" "helm")
     for tool in "${required_tools[@]}"; do
