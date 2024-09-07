@@ -257,7 +257,7 @@ echo "EKS Node Role: $EKS_NODE_ROLE"
 
 # Update IAM Role with EFS permissions
 echo "Updating IAM Role with EFS permissions..."
-update_eks_node_role_for_efs
+update_eks_node_role_for_efs "$EKS_NODE_ROLE"
 
 
 # Create or update ServiceAccount using eksctl
