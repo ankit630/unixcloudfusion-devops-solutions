@@ -229,6 +229,7 @@ if [ -z "$EFS_ID" ]; then
 fi
 
 # Export EFS_ID as an environment variable
+export AWS_ACCOUNT_ID
 export EFS_ID
 echo "EFS ID: $EFS_ID"
 
