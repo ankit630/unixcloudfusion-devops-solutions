@@ -5,6 +5,12 @@ resources:
 - "./resources/gitlab-runner-config.yaml" 
 - "./resources/efs-provisioner.yaml"
 
+configMapGenerator:
+- name: efs-config
+  behavior: replace
+  envs:
+  - efs.env
+
 vars:
 - name: EFS_ID
   objref:

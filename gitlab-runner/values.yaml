@@ -412,6 +412,7 @@ runners:
         [runners.kubernetes.volumes]
           [[runners.kubernetes.volumes.pvc]]
             name = "gitlab-runner-efs-pvc"
+            claim_name = "gitlab-runner-efs-pvc-${EFS_ID}"
             mount_path = "/gitlab"
 
   ## Absolute path for an existing runner configuration file
