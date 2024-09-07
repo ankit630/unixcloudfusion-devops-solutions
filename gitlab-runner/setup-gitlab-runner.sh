@@ -202,6 +202,29 @@ get_eks_node_role() {
     echo "$role_arn"
 }
 
+# Function to get EFS ID dynamically based on tags
+get_efs_id() {
+    local project_tag="gitlab-runner"
+    
+    # Get EFS ID by Project tag
+    local efs_id=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='$project_tag']].FileSystemId" --output text)
+    
+    # If not found by Project tag, list all EFS and let user choose
+    if [ -z "$efs_id" ]; then
+        echo "Could not find EFS with Project tag '$project_tag'. Listing all EFS:"
+        aws efs describe-file-systems --query "FileSystems[*].[FileSystemId,Tags[?Key=='Project'].Value|[0]]" --output table
+        
+        read -p "Enter the FileSystemId of the EFS you want to use: " efs_id
+    fi
+    
+    if [ -z "$efs_id" ]; then
+        echo "No EFS ID provided or found. Exiting."
+        exit 1
+    fi
+    
+    echo "$efs_id"
+}
+
 # New function to update EKS node role with EFS permissions
 update_eks_node_role_for_efs() {
     local role_arn=$1
@@ -225,7 +248,8 @@ update_eks_node_role_for_efs() {
                 "elasticfilesystem:CreateAccessPoint",
                 "elasticfilesystem:DeleteAccessPoint",
                 "elasticfilesystem:ClientMount",
-                "elasticfilesystem:ClientWrite"
+                "elasticfilesystem:ClientWrite",
+                "ec2:DescribeAvailabilityZones"
             ],
             "Resource": "*"
         }
@@ -234,6 +258,39 @@ update_eks_node_role_for_efs() {
 EOF
 )
     echo "EFS permissions added to EKS Node Role $role_name"
+}
+
+verify_and_update_security_groups() {
+    local efs_id="$1"
+    local cluster_name="$EKS_CLUSTER_NAME"
+
+    # Get VPC ID
+    vpc_id=$(aws eks describe-cluster --name "$cluster_name" --query "cluster.resourcesVpcConfig.vpcId" --output text)
+    echo "VPC ID: $vpc_id"
+
+    # Get EKS nodes' security group
+    eks_sg=$(aws eks describe-cluster --name "$cluster_name" --query "cluster.resourcesVpcConfig.clusterSecurityGroupId" --output text)
+    echo "EKS Security Group: $eks_sg"
+
+    # Get EFS security group
+    efs_sg=$(aws efs describe-mount-targets --file-system-id "$efs_id" --query "MountTargets[0].MountTargetId" --output text | xargs aws efs describe-mount-target-security-groups --mount-target-id | jq -r '.SecurityGroups[0]')
+    echo "EFS Security Group: $efs_sg"
+
+    # Check and update EKS security group
+    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values=$eks_sg Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp']" --output text | grep -q 2049; then
+        echo "Adding outbound rule to EKS security group"
+        aws ec2 authorize-security-group-egress --group-id "$eks_sg" --protocol tcp --port 2049 --cidr 0.0.0.0/0
+    else
+        echo "EKS security group already has outbound rule for port 2049"
+    fi
+
+    # Check and update EFS security group
+    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values=$efs_sg Name=from-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp']" --output text | grep -q "$eks_sg"; then
+        echo "Adding inbound rule to EFS security group"
+        aws ec2 authorize-security-group-ingress --group-id "$efs_sg" --protocol tcp --port 2049 --source-group "$eks_sg"
+    else
+        echo "EFS security group already has inbound rule from EKS security group for port 2049"
+    fi
 }
 
 # Prompt user for GitLab Runner token
@@ -258,6 +315,13 @@ echo "EKS Node Role: $EKS_NODE_ROLE"
 # Update IAM Role with EFS permissions
 echo "Updating IAM Role with EFS permissions..."
 update_eks_node_role_for_efs "$EKS_NODE_ROLE"
+
+# Get EFS ID dynamically
+EFS_ID=$(get_efs_id)
+echo "Using EFS ID: $EFS_ID"
+
+# Verify and update security groups
+verify_and_update_security_groups "$EFS_ID"
 
 
 # Create or update ServiceAccount using eksctl
