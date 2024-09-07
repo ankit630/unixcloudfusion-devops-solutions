@@ -22,6 +22,12 @@ get_gitlab_url() {
     echo "https://gitlab.com"
 }
 
+# Get variables dynamically
+AWS_ACCOUNT_ID=$(get_aws_account_id)
+EKS_CLUSTER_NAME=$(get_eks_cluster_name)
+AWS_REGION=$(get_aws_region)
+GITLAB_URL=$(get_gitlab_url)
+
 # Function to check and install eksctl
 ensure_eksctl() {
     if ! command -v eksctl &> /dev/null; then
