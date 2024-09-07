@@ -26,7 +26,7 @@ fi
 # Step 4: Create the Kubernetes cluster using eksctl
 CLUSTER_NAME="dev-cluster"
 REGION="us-east-1"
-eksctl create cluster --name $CLUSTER_NAME --version 1.30 --region $REGION --nodegroup-name standard-workers --node-type c5.large --nodes 6 --nodes-min 1 --nodes-max 6 --managed --with-oidc
+eksctl create cluster --name $CLUSTER_NAME --version 1.30 --region $REGION --nodegroup-name standard-workers --node-type t4.large --nodes 4 --nodes-min 1 --nodes-max 6 --managed --with-oidc
 
 # After creating the cluster
 echo "Installing/Updating VPC CNI addon..."
