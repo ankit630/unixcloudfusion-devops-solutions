@@ -233,9 +233,10 @@ export AWS_ACCOUNT_ID
 export EFS_ID
 echo "EFS ID: $EFS_ID"
 
-# Create or update the ConfigMap
+# Create or update the ConfigMap with actual values
 kubectl create configmap gitlab-runner-config \
-    --from-literal=aws-account-id=$AWS_ACCOUNT_ID \
+    --from-literal=aws-account-id="$AWS_ACCOUNT_ID" \
+    --from-literal=efs-id="$EFS_ID" \
     --from-literal=role-arn="arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitlabRunnerServiceAccountRole" \
     -n gitlab-runner \
     --dry-run=client -o yaml | kubectl apply -f -
