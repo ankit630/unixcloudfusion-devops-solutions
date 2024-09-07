@@ -213,8 +213,6 @@ create_or_update_iam_role
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
 
-echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID , EFS: $EFS_ID"
-
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
 kubectl apply -f ../argocd-apps/gitlab-runner-app.yaml
