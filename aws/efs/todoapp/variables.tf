@@ -30,3 +30,8 @@ variable "efs_tags" {
     Project     = "my-project"
   }
 }
+
+variable "vpc_id" {
+  description = "ID of the VPC where EFS will be created"
+  type        = string
+}

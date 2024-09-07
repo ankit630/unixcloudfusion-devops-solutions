@@ -30,3 +30,9 @@ variable "security_group_ids" {
   description = "List of security group IDs to apply to the mount targets"
   type        = list(string)
 }
+
+variable "vpc_id" {
+  description = "ID of the VPC where EFS will be created"
+  type        = string
+}
+

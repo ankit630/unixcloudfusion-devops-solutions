@@ -66,11 +66,27 @@ else
     fi
 fi
 
+# Function to get EKS cluster VPC ID
+get_eks_vpc_id() {
+    local cluster_name="dev-cluster"
+    aws eks describe-cluster --name $cluster_name --query "cluster.resourcesVpcConfig.vpcId" --output text
+}
+
 # Change to the directory containing this script
 cd "$(dirname "$0")"
 
 # Copy the backend configuration
 cp ../../../setup_terraform/backend.tf .
+
+# Get the VPC ID
+VPC_ID=$(get_eks_vpc_id)
+
+# Add or update VPC ID in terraform.tfvars
+if grep -q "vpc_id" terraform.tfvars; then
+    sed -i "s/vpc_id.*=.*/vpc_id = \"$VPC_ID\"/" terraform.tfvars
+else
+    echo "vpc_id = \"$VPC_ID\"" >> terraform.tfvars
+fi
 
 # Initialize Terraform
 echo "Initializing Terraform..."
