@@ -22,23 +22,6 @@ get_gitlab_url() {
     echo "https://gitlab.com"
 }
 
-# Get variables dynamically
-AWS_ACCOUNT_ID=$(get_aws_account_id)
-EKS_CLUSTER_NAME=$(get_eks_cluster_name)
-AWS_REGION=$(get_aws_region)
-GITLAB_URL=$(get_gitlab_url)
-
-echo "Using the following variables:"
-echo "AWS Account ID: $AWS_ACCOUNT_ID"
-echo "EKS Cluster Name: $EKS_CLUSTER_NAME"
-echo "AWS Region: $AWS_REGION"
-echo "GitLab URL: $GITLAB_URL"
-
-# Set up EFS configuration
-echo "Setting up EFS configuration..."
-EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
-AWS_ACCOUNT_ID=$(get_aws_account_id)
-
 # Function to check and install eksctl
 ensure_eksctl() {
     if ! command -v eksctl &> /dev/null; then
@@ -90,26 +73,6 @@ check_requirements() {
 
 # Check for required tools
 check_requirements
-
-# Function to handle AWS Secrets Manager secret
-handle_secret() {
-    local secret_name="gitlab/gitlab-runner-secrets"
-    local new_secret_string="{\"runner-token\":\"$RUNNER_TOKEN\",\"runner-registration-token\":\"\",\"aws-account-id\":\"$AWS_ACCOUNT_ID\",\"efs-id\":\"$EFS_ID\"}"
-
-    if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
-        echo "Secret already exists. Checking if update is needed..."
-        local current_secret_string=$(aws secretsmanager get-secret-value --secret-id "$secret_name" --query SecretString --output text)
-        if [ "$current_secret_string" != "$new_secret_string" ]; then
-            echo "Updating secret..."
-            aws secretsmanager update-secret --secret-id "$secret_name" --secret-string "$new_secret_string"
-        else
-            echo "Secret is up to date. No changes needed."
-        fi
-    else
-        echo "Creating new secret..."
-        aws secretsmanager create-secret --name "$secret_name" --description "GitLab Runner secrets" --secret-string "$new_secret_string"
-    fi
-}
 
 # Get the OIDC provider URL
 OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')

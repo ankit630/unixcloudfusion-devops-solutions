@@ -225,7 +225,7 @@ rbac:
   ## DEPRECATED: Please use `serviceAccount.annotations` instead
   ##
   serviceAccountAnnotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitLabRunnerRole"
+    eks.amazonaws.com/role-arn: "arn:aws:iam::730335588086:role/GitLabRunnerRole"
 
   ## Use podSecurity Policy
   ## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
@@ -414,7 +414,6 @@ runners:
             name = "gitlab-runner-efs-pvc"
             claim_name = "gitlab-runner-efs-pvc"
             mount_path = "/gitlab"
-        efs_id = "PLACEHOLDER_EFS_ID"
 
   ## Absolute path for an existing runner configuration file
   ## Can be used alongside "volumes" and "volumeMounts" to use an external config file
