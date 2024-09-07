@@ -238,6 +238,29 @@ create_or_update_iam_role
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
 
+ # Function to wait for PVC to be bound
+ wait_for_pvc() {
+   local pvc_name="$1"
+   local namespace="$2"
+   local timeout=300
+   local interval=10
+   local elapsed=0
+ 
+   while [ $elapsed -lt $timeout ]; do
+     status=$(kubectl get pvc "$pvc_name" -n "$namespace" -o jsonpath='{.status.phase}' 2>/dev/null)
+     if [ "$status" = "Bound" ]; then
+       echo "PVC $pvc_name is now bound."
+       return 0
+     fi
+     echo "Waiting for PVC $pvc_name to be bound... (${elapsed}s)"
+     sleep $interval
+     elapsed=$((elapsed + interval))
+   done
+ 
+   echo "Timeout waiting for PVC $pvc_name to be bound."
+   return 1
+ }
+
 # Set up EFS configuration
 echo "Setting up EFS configuration..."
 setup_efs_config
@@ -254,6 +277,10 @@ echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID"
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
 kubectl apply -f ../argocd-apps/gitlab-runner-app.yaml
+
+ # Wait for PVC to be bound
+ echo "Waiting for PVC to be bound..."
+ wait_for_pvc "gitlab-runner-efs-pvc" "gitlab-runner"
 
 echo "GitLab Runner setup complete!"
 echo "ArgoCD will now manage the deployment of GitLab Runner and its resources."
