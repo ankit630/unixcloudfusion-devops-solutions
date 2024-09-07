@@ -86,7 +86,7 @@ if grep -q "vpc_id" terraform.tfvars; then
     sed -i "s/vpc_id.*=.*/vpc_id = \"$VPC_ID\"/" terraform.tfvars
 else
     # Ensure there's a newline before adding vpc_id
-    sed -i -e '$a\' terraform.tfvars
+    echo "" >> terraform.tfvars
     echo "vpc_id = \"$VPC_ID\"" >> terraform.tfvars
 fi
 
