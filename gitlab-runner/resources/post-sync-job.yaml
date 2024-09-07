@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: post-sync-secret-update
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  template:
+    spec:
+      serviceAccountName: gitlab-runner-sa
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl
+        command:
+        - /bin/sh
+        - -c
+        - |
+          EFS_ID=$(kubectl get secret gitlab-runner-secret -n gitlab-runner -o jsonpath='{.data.efs-id}' | base64 -d)
+          AWS_ACCOUNT_ID=$(kubectl get secret gitlab-runner-secret -n gitlab-runner -o jsonpath='{.data.aws-account-id}' | base64 -d)
+          
+          # Update StorageClass
+          kubectl patch storageclass efs-sc --type='json' -p="[{'op': 'replace', 'path': '/parameters/fileSystemId', 'value':'$EFS_ID'}]"
+          
+          # Update HelmRelease
+          kubectl patch helmrelease gitlab-runner -n gitlab-runner --type='json' -p="[
+            {'op': 'replace', 'path': '/spec/values/rbac/serviceAccountAnnotations/eks.amazonaws.com~1role-arn', 'value':'arn:aws:iam::$AWS_ACCOUNT_ID:role/GitLabRunnerRole'},
+            {'op': 'replace', 'path': '/spec/values/runners/config', 'value':'[[runners]]\n  [runners.kubernetes]\n    namespace = \"{{.Release.Namespace}}\"\n    image = \"ubuntu:20.04\"\n    service_account = \"{{ .Values.rbac.serviceAccountName }}\"\n    cpu_limit = \"1\"\n    memory_limit = \"2Gi\"\n    poll_timeout = 1200\n    volumes = [\"/var/run/docker.sock:/var/run/docker.sock\", \"/cache\"]\n    [runners.kubernetes.volumes]\n      [[runners.kubernetes.volumes.pvc]]\n        name = \"gitlab-runner-efs-pvc\"\n        claim_name = \"gitlab-runner-efs-pvc\"\n        mount_path = \"/gitlab\"\n    efs_id = \"$EFS_ID\"'}
+          ]"
+      restartPolicy: OnFailure
