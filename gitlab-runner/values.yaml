@@ -729,8 +729,10 @@ configMaps: {}
 
 ## Additional volumeMounts to add to the runner container
 ##
-volumeMounts: []
+volumeMounts:
   # Example:
+   - name: gitlab-runner-efs-pvc
+     mountPath: /gitlab
   # - name: my-volume
   #   mountPath: /mount/path
 
