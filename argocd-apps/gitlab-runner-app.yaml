@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "../gitlab-runner"
+    repoURL: https://github.com/ankit630/unixcloudfusion-devops-solutions
     targetRevision: HEAD
     path: gitlab-runner
   destination:
