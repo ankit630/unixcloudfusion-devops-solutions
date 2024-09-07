@@ -232,6 +232,9 @@ fi
 export AWS_ACCOUNT_ID
 export EFS_ID
 echo "EFS ID: $EFS_ID"
+echo "EFS ID: $EFS_ID"
+echo "AWS ACCOUNT ID: $AWS_ACCOUNT_ID"
+
 
 # Create or update the ConfigMap with actual values
 kubectl create configmap gitlab-runner-config \
@@ -241,7 +244,7 @@ kubectl create configmap gitlab-runner-config \
     -n gitlab-runner \
     --dry-run=client -o yaml | kubectl apply -f -
 
-echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID"
+echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID , EFS: $EFS_ID"
 
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
