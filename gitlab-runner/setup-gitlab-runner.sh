@@ -209,6 +209,11 @@ handle_secret
 echo "Creating or updating IAM Role..."
 create_or_update_iam_role
 
+# Update IAM Role with EFS permissions
+echo "Updating IAM Role with EFS permissions..."
+update_iam_role_for_efs
+
+
 # Create or update ServiceAccount using eksctl
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
@@ -222,6 +227,38 @@ sleep 5
 # Wait for the driver to be ready
 echo "Waiting for EFS CSI Driver to be ready..."
 kubectl rollout status deployment efs-csi-controller -n kube-system
+
+update_iam_role_for_efs() {
+    local role_name="GitLabRunnerRole"
+    local policy_name="GitLabRunnerEFSPolicy"
+
+    echo "Updating IAM Role $role_name with EFS permissions..."
+    aws iam put-role-policy \
+        --role-name "$role_name" \
+        --policy-name "$policy_name" \
+        --policy-document file://<(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:DescribeMountTargets",
+                "elasticfilesystem:DescribeFileSystems",
+                "elasticfilesystem:DescribeAccessPoints",
+                "elasticfilesystem:CreateAccessPoint",
+                "elasticfilesystem:DeleteAccessPoint",
+                "elasticfilesystem:ClientMount",
+                "elasticfilesystem:ClientWrite"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+)
+    echo "EFS permissions added to IAM Role $role_name"
+}
 
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
