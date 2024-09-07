@@ -7,9 +7,8 @@ resources:
 
 configMapGenerator:
 - name: efs-config
-  behavior: replace
-  envs:
-  - efs.env
+  literals:
+  - EFS_ID=placeholder-efs-id
 
 vars:
 - name: EFS_ID
