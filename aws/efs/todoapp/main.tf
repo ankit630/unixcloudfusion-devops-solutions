@@ -30,7 +30,7 @@ resource "aws_security_group" "efs" {
 }
 
 module "efs" {
-  source = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/efs?ref=efs-v1.0.1"
+  source = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/efs?ref=efs-v1.0.2"
 
   creation_token     = var.efs_name
   encrypted          = var.efs_encrypted
@@ -39,4 +39,5 @@ module "efs" {
   subnet_ids         = data.aws_subnets.eks.ids
   security_group_ids = [aws_security_group.efs.id]
   vpc_id             = data.aws_vpc.eks.id
+  create_security_group_rule = false  # Set this to false if the rule already exists
 }

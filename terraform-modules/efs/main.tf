@@ -19,6 +19,7 @@ resource "aws_efs_mount_target" "this" {
 }
 
 resource "aws_security_group_rule" "efs_inbound" {
+  count             = var.create_security_group_rule ? 1 : 0
   type              = "ingress"
   from_port         = 2049
   to_port           = 2049

@@ -36,3 +36,9 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "create_security_group_rule" {
+  description = "Whether to create the security group rule"
+  type        = bool
+  default     = true
+}
+
