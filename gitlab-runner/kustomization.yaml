@@ -12,3 +12,31 @@ helmCharts:
     namespace: gitlab-runner
     valuesFile: values.yaml
     includeCRDs: true
+
+replacements:
+  - source:
+      kind: ExternalSecret
+      name: gitlab-runner-secret
+      fieldPath: spec.data[?(@.secretKey=='efs-id')].remoteRef.property
+    targets:
+      - select:
+          kind: StorageClass
+          name: efs-sc
+        fieldPaths:
+          - parameters.fileSystemId
+      - select:
+          kind: HelmChart
+          name: gitlab-runner
+        fieldPaths:
+          - spec.values.runners.config
+
+  - source:
+      kind: ExternalSecret
+      name: gitlab-runner-secret
+      fieldPath: spec.data[?(@.secretKey=='aws-account-id')].remoteRef.property
+    targets:
+      - select:
+          kind: HelmChart
+          name: gitlab-runner
+        fieldPaths:
+          - spec.values.rbac.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn
