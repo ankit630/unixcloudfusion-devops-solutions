@@ -202,11 +202,11 @@ create_or_update_service_account() {
 
 # Function to set up EFS configuration
 setup_efs_config() {
-    # Fetch the EFS ID
-    EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name=='my-gitlab-runner-efs'].FileSystemId" --output text)
+    # Fetch the EFS ID based on the Project tag
+    EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Tags[?Key=='Project' && Value=='gitlab-runner']].FileSystemId" --output text)
 
     if [ -z "$EFS_ID" ]; then
-        echo "Error: No EFS file system found."
+        echo "Error: No EFS file system found with the tag Project=gitlab-runner."
         exit 1
     fi
 
