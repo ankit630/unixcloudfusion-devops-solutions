@@ -194,11 +194,21 @@ create_or_update_service_account() {
     fi
 }
 
-update_iam_role_for_efs() {
-    local role_name="GitLabRunnerRole"
-    local policy_name="GitLabRunnerEFSPolicy"
+# New function to get the EKS node role
+get_eks_node_role() {
+    local cluster_name=$1
+    local nodegroup_name=$(aws eks list-nodegroups --cluster-name "$cluster_name" --query 'nodegroups[0]' --output text)
+    local role_arn=$(aws eks describe-nodegroup --cluster-name "$cluster_name" --nodegroup-name "$nodegroup_name" --query 'nodegroup.nodeRole' --output text)
+    echo "$role_arn"
+}
 
-    echo "Updating IAM Role $role_name with EFS permissions..."
+# New function to update EKS node role with EFS permissions
+update_eks_node_role_for_efs() {
+    local role_arn=$1
+    local role_name=$(echo "$role_arn" | awk -F'/' '{print $NF}')
+    local policy_name="EKSNodeEFSPolicy"
+
+    echo "Updating EKS Node Role $role_name with EFS permissions..."
     aws iam put-role-policy \
         --role-name "$role_name" \
         --policy-name "$policy_name" \
@@ -223,7 +233,7 @@ update_iam_role_for_efs() {
 }
 EOF
 )
-    echo "EFS permissions added to IAM Role $role_name"
+    echo "EFS permissions added to EKS Node Role $role_name"
 }
 
 # Prompt user for GitLab Runner token
@@ -240,6 +250,10 @@ handle_secret
 # Create or update IAM Role using AWS CLI
 echo "Creating or updating IAM Role..."
 create_or_update_iam_role
+
+# Get EKS node role
+EKS_NODE_ROLE=$(get_eks_node_role "$EKS_CLUSTER_NAME")
+echo "EKS Node Role: $EKS_NODE_ROLE"
 
 # Update IAM Role with EFS permissions
 echo "Updating IAM Role with EFS permissions..."
