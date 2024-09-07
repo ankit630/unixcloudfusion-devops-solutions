@@ -731,18 +731,18 @@ configMaps: {}
 ##
 volumeMounts:
   # Example:
-   - name: gitlab-runner-efs-pvc
+   - name: gitlab-runner-efs
      mountPath: /gitlab
   # - name: my-volume
   #   mountPath: /mount/path
 
 ## Additional volumes to add to the runner deployment
 ##
-volumes: []
+volumes: 
   # Example:
-  # - name: my-volume
-  #   persistentVolumeClaim:
-  #     claimName: my-pvc
+   - name: gitlab-runner-efs
+     persistentVolumeClaim:
+       claimName: gitlab-runner-efs-pvc
 
 ## Array of extra K8s manifests to deploy
 ##
