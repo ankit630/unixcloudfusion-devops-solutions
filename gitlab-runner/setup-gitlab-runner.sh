@@ -217,9 +217,11 @@ create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-run
 echo "Installing EFS CSI Driver..."
 kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
 
+sleep 5
+
 # Wait for the driver to be ready
 echo "Waiting for EFS CSI Driver to be ready..."
-kubectl rollout status deployment eFs-csi-controller -n kube-system
+kubectl rollout status deployment efs-csi-controller -n kube-system
 
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
