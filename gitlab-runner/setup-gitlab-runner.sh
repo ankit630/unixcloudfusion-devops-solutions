@@ -9,7 +9,6 @@ get_aws_account_id() {
 
 # Function to get EKS Cluster Name
 get_eks_cluster_name() {
-    # This assumes you have only one EKS cluster. If you have multiple, you might need to adjust this.
     aws eks list-clusters --query "clusters[0]" --output text
 }
 
@@ -20,7 +19,6 @@ get_aws_region() {
 
 # Function to get GitLab URL
 get_gitlab_url() {
-    # This is a placeholder. You might want to store this in a config file or environment variable.
     echo "https://gitlab.com"
 }
 
@@ -36,16 +34,13 @@ echo "EKS Cluster Name: $EKS_CLUSTER_NAME"
 echo "AWS Region: $AWS_REGION"
 echo "GitLab URL: $GITLAB_URL"
 
-
 # Function to check and install eksctl
 ensure_eksctl() {
     if ! command -v eksctl &> /dev/null; then
         echo "eksctl not found. Installing..."
-        # For Linux
         if [[ "$(uname)" == "Linux" ]]; then
             curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             sudo mv /tmp/eksctl /usr/local/bin
-        # For macOS
         elif [[ "$(uname)" == "Darwin" ]]; then
             brew tap weaveworks/tap
             brew install weaveworks/tap/eksctl
@@ -112,12 +107,8 @@ handle_secret() {
 }
 
 # Get the OIDC provider URL
-OIDC_PROVIDER=$(aws eks describe-cluster --name dev-cluster --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
+OIDC_PROVIDER=$(aws eks describe-cluster --name $EKS_CLUSTER_NAME --query "cluster.identity.oidc.issuer" --output text | sed 's|https://||')
 echo "OIDC Provider: $OIDC_PROVIDER"
-
-# Get the AWS account ID
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-echo "AWS Account ID: $AWS_ACCOUNT_ID"
 
 # Function to create or update IAM Role using AWS CLI
 create_or_update_iam_role() {
@@ -209,6 +200,25 @@ create_or_update_service_account() {
     fi
 }
 
+# Function to set up EFS configuration
+setup_efs_config() {
+    # Fetch the EFS ID
+    EFS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name=='my-gitlab-runner-efs'].FileSystemId" --output text)
+
+    if [ -z "$EFS_ID" ]; then
+        echo "Error: No EFS file system found."
+        exit 1
+    fi
+
+    # Update the ConfigMap with the EFS ID
+    kubectl create configmap efs-config \
+        --from-literal=EFS_ID=$EFS_ID \
+        -n gitlab-runner \
+        --dry-run=client -o yaml | kubectl apply -f -
+
+    echo "ConfigMap updated with EFS ID: $EFS_ID"
+}
+
 # Prompt user for GitLab Runner token
 read -sp "Enter your GitLab Runner token: " RUNNER_TOKEN
 echo
@@ -228,8 +238,9 @@ create_or_update_iam_role
 echo "Creating or updating ServiceAccount using eksctl..."
 create_or_update_service_account "$EKS_CLUSTER_NAME" "gitlab-runner" "gitlab-runner-sa" "$ROLE_ARN"
 
-# Get the AWS Account ID
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+# Set up EFS configuration
+echo "Setting up EFS configuration..."
+setup_efs_config
 
 # Create or update the ConfigMap
 kubectl create configmap gitlab-runner-config \
