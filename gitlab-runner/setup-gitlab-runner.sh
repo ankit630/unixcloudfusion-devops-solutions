@@ -230,6 +230,7 @@ fi
 
 # Export EFS_ID as an environment variable
 export EFS_ID
+echo "EFS ID: $EFS_ID"
 
 # Create or update the ConfigMap
 kubectl create configmap gitlab-runner-config \
@@ -243,10 +244,6 @@ echo "ConfigMap created/updated with AWS Account ID: $AWS_ACCOUNT_ID"
 # Apply ArgoCD application
 echo "Applying ArgoCD application for GitLab Runner..."
 kubectl apply -f ../argocd-apps/gitlab-runner-app.yaml
-
- # Wait for PVC to be bound
- echo "Waiting for PVC to be bound..."
- wait_for_pvc "gitlab-runner-efs-pvc" "gitlab-runner"
 
 echo "GitLab Runner setup complete!"
 echo "ArgoCD will now manage the deployment of GitLab Runner and its resources."

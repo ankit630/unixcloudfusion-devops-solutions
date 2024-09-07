@@ -5,20 +5,6 @@ resources:
 - "./resources/gitlab-runner-config.yaml" 
 - "./resources/efs-provisioner.yaml"
 
-configMapGenerator:
-- name: efs-config
-  literals:
-  - EFS_ID=${EFS_ID}
-
-vars:
-- name: EFS_ID
-  objref:
-    kind: ConfigMap
-    name: efs-config
-    apiVersion: v1
-  fieldref:
-    fieldpath: data.EFS_ID
-
 helmCharts:
   - repo: https://charts.gitlab.io
     name: gitlab-runner
@@ -48,3 +34,11 @@ vars:
     apiVersion: v1
   fieldref:
     fieldpath: data.role-arn
+
+- name: EFS_ID
+  objref:
+    kind: ConfigMap
+    name: gitlab-runner-config
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.efs-id
