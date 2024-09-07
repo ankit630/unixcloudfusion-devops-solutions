@@ -145,6 +145,9 @@ if [[ -z "$ARGOCD_SERVER" ]]; then
     exit 1
 fi
 
+# sleep 30seconds for ARgocd ELB DNS to become resolvable 
+sleep 30
+
 # Login to ArgoCD
 argocd login "$ARGOCD_SERVER" --insecure --username admin --password $ARGOCD_PASSWORD
 
