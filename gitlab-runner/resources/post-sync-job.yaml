@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: post-sync-update-helmrelease
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      serviceAccountName: gitlab-runner-sa
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl
+        command:
+        - /bin/sh
+        - -c
+        - |
+          AWS_ACCOUNT_ID=$(kubectl get secret gitlab-runner-secret -n gitlab-runner -o jsonpath='{.data.aws-account-id}' | base64 -d)
+          
+          # Update HelmRelease
+          kubectl patch helmrelease gitlab-runner -n gitlab-runner --type='json' -p="[
+            {'op': 'replace', 'path': '/spec/values/rbac/serviceAccountAnnotations/eks.amazonaws.com~1role-arn', 'value':'arn:aws:iam::$AWS_ACCOUNT_ID:role/GitLabRunnerRole'}
+          ]"
+      restartPolicy: OnFailure
