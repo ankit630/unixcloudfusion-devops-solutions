@@ -1,8 +1,7 @@
 kind: Kustomization
 resources:
 - "./resources/externalsecret.yaml"
-- "./resources/aws-secretstore.yaml"
-- "./resources/gitlab-runner-config.yaml" 
+- "./resources/aws-secretstore.yaml" 
 - "./resources/efs-provisioner.yaml"
 
 helmCharts:
@@ -16,6 +15,8 @@ helmCharts:
 
 # this is to handle the account id for the annotation to assume role by gitlab runner
 # this is not required if bash script not used and you can update annotation in values.yaml file and efs-id
+# gitlab-runner-config is created by shell script to fetch value
+# if not using script you can remove this part and hardcode values based on your env
 
 replacements:
   - source:
