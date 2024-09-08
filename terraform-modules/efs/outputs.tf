@@ -12,3 +12,8 @@ output "efs_mount_targets" {
   description = "Mount target IDs and their attributes"
   value       = aws_efs_mount_target.mount_target[*]
 }
+
+output "efs_security_group_id" {
+  description = "ID of the EFS security group"
+  value       = aws_security_group.efs.id
+}

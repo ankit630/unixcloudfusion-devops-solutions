@@ -1,3 +1,7 @@
+data "aws_vpc" "selected" {
+  id = var.vpc_id
+}
+
 resource "aws_efs_file_system" "efs" {
   creation_token = var.efs_name
   encrypted      = true
