@@ -78,17 +78,16 @@ cd "$(dirname "$0")"
 # Copy the backend configuration
 cp ../../../setup_terraform/backend.tf .
 
-# Get the VPC ID
-VPC_ID=$(get_eks_vpc_id)
 
-# Add or update VPC ID in terraform.tfvars
-if grep -q "vpc_id" terraform.tfvars; then
-    sed -i "s/vpc_id.*=.*/vpc_id = \"$VPC_ID\"/" terraform.tfvars
-else
-    # Ensure there's a newline before adding vpc_id
-    echo "" >> terraform.tfvars
-    echo "vpc_id = \"$VPC_ID\"" >> terraform.tfvars
+CLUSTER_NAME=${1:-"dev-cluster"}
+EFS_NAME=${2:-"gitlab-runner-efs"}
+
+# Check if EKS cluster exists
+if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region "$REGION" >/dev/null 2>&1; then
+    echo "EKS cluster $CLUSTER_NAME does not exist in region $REGION. Please create it first."
+    exit 1
 fi
+
 
 # Initialize Terraform
 echo "Initializing Terraform..."
@@ -99,3 +98,9 @@ terraform plan -out=tfplan
 
 # Apply Terraform changes
 terraform apply tfplan
+
+# Output important information
+echo "EFS setup complete. Here are the details:"
+terraform output
+
+echo "You can now use this EFS in your Kubernetes configurations."
