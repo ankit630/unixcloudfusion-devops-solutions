@@ -1,32 +1,27 @@
-resource "aws_efs_file_system" "this" {
-  creation_token = var.creation_token
-  encrypted      = var.encrypted
-
-  lifecycle_policy {
-    transition_to_ia = var.transition_to_ia
-  }
-
-  tags = var.tags
+data "aws_vpc" "selected" {
+  id = var.vpc_id
 }
 
-resource "aws_efs_mount_target" "this" {
-  count = length(var.subnet_ids)
+resource "aws_efs_file_system" "efs" {
+  creation_token = var.efs_name
+  encrypted      = true
 
-  file_system_id  = aws_efs_file_system.this.id
-  subnet_id       = var.subnet_ids[count.index]
-  security_groups = [aws_security_group.efs.id]
+  tags = {
+    Name = var.efs_name
+  }
 }
 
 resource "aws_security_group" "efs" {
-  name        = "efs-security-group-${var.creation_token}"
-  description = "Security group for EFS ${var.creation_token}"
+  name        = "${var.efs_name}-efs-sg"
+  description = "Allow NFS traffic for EFS"
   vpc_id      = var.vpc_id
 
   ingress {
+    description = "NFS from VPC"
     from_port   = 2049
     to_port     = 2049
     protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.this.cidr_block]
+    cidr_blocks = [data.aws_vpc.selected.cidr_block]
   }
 
   egress {
@@ -36,9 +31,14 @@ resource "aws_security_group" "efs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = var.tags
+  tags = {
+    Name = "${var.efs_name}-efs-sg"
+  }
 }
 
-data "aws_vpc" "this" {
-  id = var.vpc_id
+resource "aws_efs_mount_target" "mount_target" {
+  count           = length(var.subnet_ids)
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = var.subnet_ids[count.index]
+  security_groups = [aws_security_group.efs.id]
 }
