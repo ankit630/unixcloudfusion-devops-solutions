@@ -4,7 +4,7 @@ include:
   - local: 'gitlab/ci-cd/sast.yml'
   - local: 'gitlab/ci-cd/code-coverage.yml'
   - local: 'gitlab/ci-cd/vulnerability-scan.yml'
-  - template: Security/Secret-Detection.latest.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
 stages:
   - test
