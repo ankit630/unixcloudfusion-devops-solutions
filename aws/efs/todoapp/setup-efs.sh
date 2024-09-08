@@ -81,6 +81,7 @@ cp ../../../setup_terraform/backend.tf .
 
 CLUSTER_NAME=${1:-"dev-cluster"}
 EFS_NAME=${2:-"gitlab-runner-efs"}
+REGION=${3:-"us-east-1"}
 
 # Check if EKS cluster exists
 if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region "$REGION" >/dev/null 2>&1; then
