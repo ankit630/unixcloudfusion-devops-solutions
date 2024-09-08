@@ -18,7 +18,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-data "aws_vpc" "selected" {
-  id = var.vpc_id
-}
