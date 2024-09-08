@@ -1,0 +1,15 @@
+stages:
+  - build
+
+# Build the application
+build:
+  stage: build
+  image: maven:3.8.1-openjdk-11-slim
+  script:
+    - cd medium-articles/todo-app
+    - mvn clean package -s settings.xml
+  artifacts:
+    paths:
+      - medium-articles/todo-app/target/todo-app.war
+  # tags:
+  #   - unixcloudfusion

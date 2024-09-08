@@ -1,0 +1,2 @@
+include:
+  - local: 'medium-articles/todo-app/.gitlab-ci.yml'
