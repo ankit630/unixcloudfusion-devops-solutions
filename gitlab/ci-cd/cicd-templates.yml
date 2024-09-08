@@ -1,7 +1,6 @@
 ---
 include:
   - local: 'gitlab/ci-cd/unit-tests.yml'
-  - local: 'gitlab/ci-cd/secret-detection.yml'
   - local: 'gitlab/ci-cd/sast.yml'
   - local: 'gitlab/ci-cd/code-coverage.yml'
   - local: 'gitlab/ci-cd/vulnerability-scan.yml'
