@@ -5,6 +5,13 @@ include:
   - local: 'gitlab/ci-cd/code-coverage.yml'
   - local: 'gitlab/ci-cd/vulnerability-scan.yml'
 
+  stages:
+  - test
+  - build
+
+variables:
+  PROJECT_PATH: ${PROJECT_PATH:-./}  #Default to root directory if not set
+
 .test_rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH

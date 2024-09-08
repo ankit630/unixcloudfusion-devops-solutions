@@ -1,3 +1,6 @@
+variables:
+  PROJECT_PATH: medium-articles/todo-app
+
 include:
   - local: 'gitlab/ci-cd/cicd-templates.yml'
 

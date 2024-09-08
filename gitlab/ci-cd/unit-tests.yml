@@ -4,6 +4,7 @@
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
   script:
+    - cd ${PROJECT_PATH}
     - mvn test
   artifacts:
     reports:
@@ -11,5 +12,3 @@
   cache:
     paths:
       - /gitlab/m2/repository
-  rules:
-    - if: $CI_COMMIT_BRANCH
