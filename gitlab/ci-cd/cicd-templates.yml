@@ -18,9 +18,9 @@ unit_tests:
     - .unit_tests
     - .test_rules
 
-secrets_detection:
+secret_detection:
   extends:
-    - .secrets_detection
+    - .secret_detection
     - .test_rules
 
 sast:
