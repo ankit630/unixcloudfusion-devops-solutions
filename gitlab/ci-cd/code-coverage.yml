@@ -17,3 +17,5 @@
   cache:
     paths:
       - /gitlab/m2/repository
+  rules:
+    - if: $CI_COMMIT_BRANCH

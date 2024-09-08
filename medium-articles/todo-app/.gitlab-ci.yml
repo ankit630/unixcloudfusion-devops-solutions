@@ -1,12 +1,11 @@
 include:
-  - project: 'ankit630/unixcloudfusion-devops-solutions'
-    ref: feat/unit-tests
-    file: 'gitlab/ci-cd/cicd-templates.yml'
+  - local: 'gitlab/ci-cd/cicd-templates.yml'
 
 stages:
-  - pre-build
   - test
   - build
+
+# The jobs from cicd-templates.yml will be included here
 
 # Build the application
 build:
@@ -18,3 +17,5 @@ build:
   artifacts:
     paths:
       - medium-articles/todo-app/target/todo-app.war
+  rules:
+    - if: $CI_COMMIT_BRANCH

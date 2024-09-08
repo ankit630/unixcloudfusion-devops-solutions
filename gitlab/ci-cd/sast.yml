@@ -1,5 +1,5 @@
-.sast:
-  stage: pre-build
+sast:
+  stage: test
   image: maven:3.8.1-openjdk-11-slim
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
@@ -13,3 +13,5 @@
   cache:
     paths:
       - /gitlab/m2/repository
+  rules:
+    - if: $CI_COMMIT_BRANCH
