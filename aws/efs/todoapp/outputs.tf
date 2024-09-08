@@ -21,15 +21,3 @@ output "vpc_id" {
 output "private_subnet_ids" {
   value = data.aws_subnets.private.ids
 }
-
-output "eks_cluster_details" {
-  value = {
-    name   = data.aws_eks_cluster.cluster.name
-    arn    = data.aws_eks_cluster.cluster.arn
-    status = data.aws_eks_cluster.cluster.status
-  }
-}
-
-output "all_subnet_ids" {
-  value = data.aws_subnets.private.ids
-}
