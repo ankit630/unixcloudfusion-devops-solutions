@@ -1,0 +1,17 @@
+sast:
+  stage: pre-build
+  image: maven:3.8.1-openjdk-11-slim
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  script:
+    - mvn org.owasp:dependency-check-maven:check
+    - mvn com.github.spotbugs:spotbugs-maven-plugin:check
+  artifacts:
+    paths:
+      - target/dependency-check-report.html
+      - target/spotbugsXml.xml
+  cache:
+    paths:
+      - .m2/repository
+  rules:
+    - if: $CI_COMMIT_BRANCH
