@@ -1,7 +1,7 @@
 include:
   - project: 'ankit630/unixcloudfusion-devops-solutions'
     ref: feat/unit-tests
-    file: 'gitlab/cicd-templates.yml'
+    file: 'gitlab/ci-cd/cicd-templates.yml'
 
 stages:
   - pre-build
