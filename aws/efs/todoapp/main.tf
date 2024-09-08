@@ -29,7 +29,7 @@ data "aws_subnets" "all" {
 module "efs" {
   source       = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/efs?ref=efs-v1.0.9"
   vpc_id       = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
-  subnet_ids   = data.aws_subnets.private.ids
+  subnet_ids   = data.aws_subnets.all.ids
   efs_name     = var.efs_name
   tags       = {
     Environment = "dev"
