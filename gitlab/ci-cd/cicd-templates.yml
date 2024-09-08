@@ -8,6 +8,7 @@ include:
 
 stages:
   - test
+  - coverage
   - build
 
 variables:
@@ -22,26 +23,31 @@ variables:
     - when: never
 
 unit_tests:
+  stage: test
   extends: 
     - .unit_tests
     - .test_rules
 
 secret_detection:
+  stage: test
   extends:
     - .secret_detection
     - .test_rules
 
 sast:
+  stage: test
   extends:
     - .sast
     - .test_rules
 
 code-coverage:
+  stage: coverage
   extends:
     - .code_coverage
     - .test_rules
 
 vulnerability-scan:
+  stage: test
   extends:
     - .vulnerability_scan
     - .test_rules

@@ -5,10 +5,13 @@
     MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
   script:
     - cd ${PROJECT_PATH}
-    - mvn test
+    - mvn clean test jacoco:report
   artifacts:
+    paths:
+      - ${PROJECT_PATH}/target/site/jacoco/
+      - ${PROJECT_PATH}/target/surefire-reports/
     reports:
-      junit: target/surefire-reports/TEST-*.xml
+      junit: ${PROJECT_PATH}/target/surefire-reports/TEST-*.xml
   cache:
     paths:
       - /gitlab/m2/repository
