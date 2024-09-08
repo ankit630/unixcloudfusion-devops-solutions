@@ -27,10 +27,10 @@ sast:
 
 code-coverage:
   extends:
-    - .code-coverage
+    - .code_coverage
     - .test_rules
 
 vulnerability-scan:
   extends:
-    - .vulnerability-scan
+    - .vulnerability_scan
     - .test_rules
