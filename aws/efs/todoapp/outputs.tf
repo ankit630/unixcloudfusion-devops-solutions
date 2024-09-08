@@ -13,3 +13,7 @@ output "efs_security_group_id" {
 output "efs_mount_targets" {
   value = module.efs.efs_mount_targets
 }
+
+output "private_subnet_ids" {
+  value = data.aws_subnets.private.ids
+}
