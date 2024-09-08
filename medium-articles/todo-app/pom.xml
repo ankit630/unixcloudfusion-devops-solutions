@@ -20,8 +20,7 @@
       <version>4.0.1</version>
       <scope>provided</scope>
     </dependency>
-  </dependencies>
-      <!-- JUnit 5 dependencies -->
+    <!-- JUnit 5 dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
