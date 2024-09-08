@@ -1,15 +1,13 @@
-sast:
-  stage: pre-build
+unit_test:
+  stage: test
   image: maven:3.8.1-openjdk-11-slim
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
   script:
-    - mvn org.owasp:dependency-check-maven:check
-    - mvn com.github.spotbugs:spotbugs-maven-plugin:check
+    - mvn test
   artifacts:
-    paths:
-      - target/dependency-check-report.html
-      - target/spotbugsXml.xml
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
   cache:
     paths:
       - /gitlab/m2/repository

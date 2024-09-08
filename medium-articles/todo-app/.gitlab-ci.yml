@@ -1,21 +1,11 @@
 include:
-  - local: 'ci-cd/*.yml'
+  - project: 'unixcloudfusion-devops-solutions'
+    file: 'gitlab/cicd-templates.yml'
 
 stages:
   - pre-build
   - test
   - build
-
-# Run tests
-test:
-  stage: test
-  image: maven:3.8.1-openjdk-11-slim
-  script:
-    - cd medium-articles/todo-app
-    - mvn test
-  artifacts:
-    reports:
-      junit: medium-articles/todo-app/target/surefire-reports/TEST-*.xml
 
 # Build the application
 build:

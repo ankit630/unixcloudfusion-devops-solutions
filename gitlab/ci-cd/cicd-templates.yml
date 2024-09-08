@@ -1,0 +1,27 @@
+include:
+  - local: 'unit-tests.yml'
+  - local: 'secrets-detection.yml'
+  - local: 'sast.yml'
+
+.test_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
+
+unit_tests:
+  extends: 
+    - .unit_tests
+    - .test_rules
+
+secrets_detection:
+  extends:
+    - .secrets_detection
+    - .test_rules
+
+sast:
+  extends:
+    - .sast
+    - .test_rules
