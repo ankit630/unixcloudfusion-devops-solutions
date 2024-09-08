@@ -1,4 +1,4 @@
-sast:
+.sast:
   stage: pre-build
   image: maven:3.8.1-openjdk-11-slim
   variables:
