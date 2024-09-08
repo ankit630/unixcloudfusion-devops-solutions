@@ -1,3 +1,4 @@
+---
 include:
   - local: 'gitlab/ci-cd/unit-tests.yml'
   - local: 'gitlab/ci-cd/secret-detection.yml'
@@ -5,12 +6,12 @@ include:
   - local: 'gitlab/ci-cd/code-coverage.yml'
   - local: 'gitlab/ci-cd/vulnerability-scan.yml'
 
-  stages:
+stages:
   - test
   - build
 
 variables:
-  PROJECT_PATH: ${PROJECT_PATH:-./}  #Default to root directory if not set
+  PROJECT_PATH: ${PROJECT_PATH:-./}
 
 .test_rules:
   rules:
