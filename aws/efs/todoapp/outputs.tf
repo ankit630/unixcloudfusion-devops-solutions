@@ -17,3 +17,7 @@ output "efs_mount_targets" {
 output "private_subnet_ids" {
   value = data.aws_subnets.private.ids
 }
+
+output "vpc_id" {
+  value = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
+}
