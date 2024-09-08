@@ -3,8 +3,8 @@ include:
   - local: 'gitlab/ci-cd/unit-tests.yml'
   - local: 'gitlab/ci-cd/sast.yml'
   - local: 'gitlab/ci-cd/code-coverage.yml'
-  - local: 'gitlab/ci-cd/vulnerability-scan.yml'
   - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
 
 stages:
   - test
@@ -41,10 +41,4 @@ code-coverage:
   stage: coverage
   extends:
     - .code_coverage
-    - .test_rules
-
-vulnerability-scan:
-  stage: test
-  extends:
-    - .vulnerability_scan
     - .test_rules
