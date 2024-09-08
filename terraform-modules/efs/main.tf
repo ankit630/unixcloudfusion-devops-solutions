@@ -6,9 +6,12 @@ resource "aws_efs_file_system" "efs" {
   creation_token = var.efs_name
   encrypted      = true
 
-  tags = {
-    Name = var.efs_name
-  }
+  tags = merge(
+    {
+      Name = var.efs_name
+    },
+    var.tags
+  )
 }
 
 resource "aws_security_group" "efs" {
@@ -31,9 +34,12 @@ resource "aws_security_group" "efs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.efs_name}-efs-sg"
-  }
+  tags = merge(
+    {
+      Name = "${var.efs_name}-efs-sg"
+    },
+    var.tags
+  )
 }
 
 resource "aws_efs_mount_target" "mount_target" {
