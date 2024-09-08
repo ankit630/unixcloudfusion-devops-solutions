@@ -6,6 +6,7 @@ include:
 
 stages:
   - test
+  - coverage
   - build
 
 # The jobs from cicd-templates.yml will be included here
