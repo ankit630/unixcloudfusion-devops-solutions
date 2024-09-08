@@ -15,10 +15,3 @@ variable "efs_name" {
   type        = string
   default     = "gitlab-runner-efs"
 }
-
-output "subnet_details" {
-  value = [for s in data.aws_subnets.private.ids : {
-    id   = s
-    tags = data.aws_subnet.details[s].tags
-  }]
-}
