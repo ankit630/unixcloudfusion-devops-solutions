@@ -1,5 +1,5 @@
 include:
-  - project: 'unixcloudfusion-devops-solutions'
+  - project: 'ankit630/unixcloudfusion-devops-solutions'
     file: 'gitlab/cicd-templates.yml'
 
 stages:
