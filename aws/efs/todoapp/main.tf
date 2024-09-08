@@ -31,11 +31,16 @@ data "aws_subnets" "private" {
   }
 }
 
+data "aws_vpc" "selected" {
+  id = data.aws_vpc.eks_vpc.id
+}
+
 module "efs" {
   source       = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/efs?ref=efs-v1.0.6"
   vpc_id       = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
   subnet_ids   = data.aws_subnets.private.ids
   efs_name     = var.efs_name
+  cidr_block   = data.aws_vpc.selected.cidr_block
   tags       = {
     Environment = "dev"
     Project     = "gitlab-runner"
