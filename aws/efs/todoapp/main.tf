@@ -19,7 +19,7 @@ data "aws_vpc" "eks_vpc" {
   id = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
 }
 
-data "aws_subnets" "private" {
+data "aws_subnets" "all" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.eks_vpc.id]
