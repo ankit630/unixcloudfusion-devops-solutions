@@ -1,7 +1,9 @@
 include:
-  - local: 'unit-tests.yml'
-  - local: 'secrets-detection.yml'
-  - local: 'sast.yml'
+  - local: 'gitlab/ci-cd/unit-tests.yml'
+  - local: 'gitlab/ci-cd/secrets-detection.yml'
+  - local: 'gitlab/ci-cd/sast.yml'
+  - local: 'gitlab/ci-cd/code-coverage.yml'
+  - local: 'gitlab/ci-cd/vulnerability-scan.yml'
 
 .test_rules:
   rules:
@@ -24,4 +26,14 @@ secrets_detection:
 sast:
   extends:
     - .sast
+    - .test_rules
+
+code-coverage:
+  extends:
+    - .code-coverage
+    - .test_rules
+
+vulnerability-scan:
+  extends:
+    - .vulnerability-scan
     - .test_rules
