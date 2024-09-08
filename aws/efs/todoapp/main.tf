@@ -19,16 +19,12 @@ data "aws_vpc" "eks_vpc" {
   id = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
 }
 
-# data "aws_subnets" "private" {
-#   filter {
-#     name   = "vpc-id"
-#     values = [data.aws_eks_cluster.cluster.vpc_config[0].vpc_id]
-#   }
-
-data "aws_subnet" "details" {
-  for_each = toset(data.aws_subnets.private.ids)
-  id        = each.value
+data "aws_subnets" "private" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.eks_vpc.id]
   }
+}
 
 module "efs" {
   source       = "git::https://github.com/ankit630/unixcloudfusion-devops-solutions.git//terraform-modules/efs?ref=efs-v1.0.9"

@@ -15,19 +15,19 @@ output "efs_mount_targets" {
 }
 
 output "vpc_id" {
-  value = data.aws_eks_cluster.cluster.vpc_config[0].vpc_id
+  value = data.aws_vpc.eks_vpc.id
 }
 
-output "all_subnet_ids" {
+output "private_subnet_ids" {
   value = data.aws_subnets.private.ids
 }
 
-output "subnet_details" {
-  value = {for s in data.aws_subnets.private.ids : s => {
-    id   = s
-    tags = data.aws_subnet.details[s].tags
-    availability_zone = data.aws_subnet.details[s].availability_zone
-  }}
+output "eks_cluster_details" {
+  value = {
+    name   = data.aws_eks_cluster.cluster.name
+    arn    = data.aws_eks_cluster.cluster.arn
+    status = data.aws_eks_cluster.cluster.status
+  }
 }
 
 output "all_subnet_ids" {
