@@ -278,15 +278,15 @@ verify_and_update_security_groups() {
     echo "EFS Security Group: $efs_sg"
 
     # Check and update EKS security group
-    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values="$eks_sg" Name=from-port,Values=2049 Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp' && IsEgress==\`true\`]" --output text | grep -q 2049; then
+    if ! aws ec2 describe-security-groups --group-ids "$eks_sg" --query "SecurityGroups[0].IpPermissionsEgress[?FromPort==\`2049\` && ToPort==\`2049\` && IpProtocol==\`tcp\` && UserIdGroupPairs[0].GroupId==\`$efs_sg\`]" --output text | grep -q .; then
         echo "Adding outbound rule to EKS security group"
         aws ec2 authorize-security-group-egress --group-id "$eks_sg" --protocol tcp --port 2049 --source-group "$efs_sg"
     else
-        echo "EKS security group already has outbound rule for port 2049"
+        echo "EKS security group already has outbound rule for port 2049 to EFS security group"
     fi
 
     # Check and update EFS security group
-    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values="$efs_sg" Name=from-port,Values=2049 Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp' && IsEgress==\`false\`]" --output text | grep -q "$eks_sg"; then
+    if ! aws ec2 describe-security-groups --group-ids "$efs_sg" --query "SecurityGroups[0].IpPermissions[?FromPort==\`2049\` && ToPort==\`2049\` && IpProtocol==\`tcp\` && UserIdGroupPairs[0].GroupId==\`$eks_sg\`]" --output text | grep -q .; then
         echo "Adding inbound rule to EFS security group"
         aws ec2 authorize-security-group-ingress --group-id "$efs_sg" --protocol tcp --port 2049 --source-group "$eks_sg"
     else
