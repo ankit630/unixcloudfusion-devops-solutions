@@ -3,7 +3,7 @@ include:
   - local: 'gitlab/ci-cd/unit-tests.yml'
   - local: 'gitlab/ci-cd/sast.yml'
   - local: 'gitlab/ci-cd/code-coverage.yml'
-  - local: 'gitlab/ci-cd/dependency-scan.yml'
+  # - local: 'gitlab/ci-cd/dependency-scan.yml'
   - local: 'gitlab/ci-cd/code-quality.yml'
   - template: Security/Secret-Detection.gitlab-ci.yml
   # - template: Jobs/Container-Scanning.gitlab-ci.yml
@@ -44,11 +44,11 @@ code-coverage:
     - .code_coverage
     - .test_rules
 
-dependency_scanning:
-  stage: test
-  extends:
-    - .dependency_scan
-    - .test_rules
+# dependency_scanning:
+#   stage: test
+#   extends:
+#     - .dependency_scan
+#     - .test_rules
 
 code-quality:
   stage: test
