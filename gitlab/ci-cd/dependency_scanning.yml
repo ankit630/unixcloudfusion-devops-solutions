@@ -1,7 +1,18 @@
-.dependency_scanning:
+.dependency_scan:
   stage: test
+  image: maven:3.8.1-openjdk-11-slim
   variables:
-    DS_JAVA_VERSION: 18
-    SECURE_LOG_LEVEL: "debug"
-  before_script:
+    MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
+  script:
     - cd ${PROJECT_PATH}
+    - mvn org.owasp:dependency-check-maven:check
+  artifacts:
+    paths:
+      - ${PROJECT_PATH}/target/dependency-check-report.html
+    reports:
+      junit: ${PROJECT_PATH}/target/dependency-check-report.xml
+  allow_failure: true  # Optional: set to false if you want the pipeline to fail on vulnerabilities
+  cache:
+    paths:
+      - /gitlab/m2/repository
+      - ${PROJECT_PATH}/.dependency-check-cache

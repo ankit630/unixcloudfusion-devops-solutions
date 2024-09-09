@@ -90,6 +90,17 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>6.5.3</version>
+        <configuration>
+          <format>ALL</format>
+          <failBuildOnCVSS>8</failBuildOnCVSS>
+          <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+        </configuration>
+      </plugin>
+    </plugins>
     </plugins>
   </build>
 </project>
