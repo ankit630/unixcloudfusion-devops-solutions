@@ -1,0 +1,15 @@
+.sast:
+  stage: test
+  image: maven:3.8.1-openjdk-11-slim
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
+    NVD_API_KEY: ${NVD_API_KEY}
+  script:
+    - cd ${PROJECT_PATH}
+    - mvn com.github.spotbugs:spotbugs-maven-plugin:check
+  artifacts:
+    paths:
+      - ${PROJECT_PATH}/target/spotbugsXml.xml
+  cache:
+    paths:
+      - /gitlab/m2/repository

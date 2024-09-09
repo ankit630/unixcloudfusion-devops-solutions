@@ -1,0 +1,58 @@
+---
+include:
+  - local: 'gitlab/ci-cd/unit-tests.yml'
+  - local: 'gitlab/ci-cd/sast.yml'
+  - local: 'gitlab/ci-cd/code-coverage.yml'
+  - local: 'gitlab/ci-cd/dependency-scan.yml'
+  - local: 'gitlab/ci-cd/code-quality.yml'
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  # - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+stages:
+  - test
+  - coverage
+  - build
+
+variables:
+  PROJECT_PATH: ${PROJECT_PATH:-./}
+  SECRETS_ANALYZER_VERSION: "4.5"
+
+
+.test_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
+
+unit_tests:
+  stage: test
+  extends: 
+    - .unit_tests
+    - .test_rules
+
+sast:
+  stage: test
+  extends:
+    - .sast
+    - .test_rules
+
+code-coverage:
+  stage: coverage
+  extends:
+    - .code_coverage
+    - .test_rules
+
+dependency_scanning:
+  stage: test
+  extends:
+    - .dependency_scan
+    - .test_rules
+
+code-quality:
+  stage: test
+  extends:
+    - .code_quality
+    - .test_rules
+

@@ -1,0 +1,17 @@
+.unit_tests:
+  stage: test
+  image: maven:3.8.1-openjdk-11-slim
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=/gitlab/m2/repository"
+  script:
+    - cd ${PROJECT_PATH}
+    - mvn clean test jacoco:report
+  artifacts:
+    paths:
+      - ${PROJECT_PATH}/target/site/jacoco/
+      - ${PROJECT_PATH}/target/surefire-reports/
+    reports:
+      junit: ${PROJECT_PATH}/target/surefire-reports/TEST-*.xml
+  cache:
+    paths:
+      - /gitlab/m2/repository

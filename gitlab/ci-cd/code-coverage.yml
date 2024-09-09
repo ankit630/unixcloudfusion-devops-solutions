@@ -1,0 +1,20 @@
+.code_coverage:
+  stage: test
+  needs:
+    - job: unit_tests
+      artifacts: true
+  image: maven:3.8.1-openjdk-11-slim
+  script:
+    - cd ${PROJECT_PATH}
+    - if [ -f target/site/jacoco/jacoco.csv ]; then
+        awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print covered, "/", instructions, " instructions covered"; print 100*covered/instructions, "% covered" }' target/site/jacoco/jacoco.csv;
+      else
+        echo "No coverage data found. Ensure unit tests job completed successfully.";
+        exit 1;
+      fi
+  coverage: '/([0-9]{1,3}.[0-9]*).covered/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: ${PROJECT_PATH}/target/site/jacoco/jacoco.xml
