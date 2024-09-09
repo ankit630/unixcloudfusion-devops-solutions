@@ -402,6 +402,7 @@ runners:
         namespace = "{{.Release.Namespace}}"
         image = "ubuntu:20.04"
         service_account= "gitlab-runner-sa"
+        privileged = true
         cpu_limit = "1"
         memory_limit = "2Gi"
         poll_timeout = 1200
