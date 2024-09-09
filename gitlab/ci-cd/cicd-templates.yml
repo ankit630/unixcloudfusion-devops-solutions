@@ -5,7 +5,6 @@ include:
   - local: 'gitlab/ci-cd/code-coverage.yml'
   - local: 'gitlab/ci-cd/dependency-scan.yml'
   - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Code-Quality.gitlab-ci.yml
   # - template: Jobs/Container-Scanning.gitlab-ci.yml
 
 stages:
