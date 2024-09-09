@@ -525,10 +525,10 @@ runners:
 ## ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
 ##
 securityContext:
-  allowPrivilegeEscalation: false
+  allowPrivilegeEscalation: true
   readOnlyRootFilesystem: false
-  runAsNonRoot: true
-  privileged: false
+  runAsNonRoot: false
+  privileged: true
   capabilities:
     drop: ["ALL"]
 
