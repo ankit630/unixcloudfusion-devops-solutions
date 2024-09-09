@@ -273,19 +273,20 @@ verify_and_update_security_groups() {
     echo "EKS Security Group: $eks_sg"
 
     # Get EFS security group
-    efs_sg=$(aws efs describe-mount-targets --file-system-id "$efs_id" --query "MountTargets[0].MountTargetId" --output text | xargs aws efs describe-mount-target-security-groups --mount-target-id | jq -r '.SecurityGroups[0]')
+    efs_mount_target_id=$(aws efs describe-mount-targets --file-system-id "$efs_id" --query "MountTargets[0].MountTargetId" --output text)
+    efs_sg=$(aws efs describe-mount-target-security-groups --mount-target-id "$efs_mount_target_id" | jq -r '.SecurityGroups[0]')
     echo "EFS Security Group: $efs_sg"
 
     # Check and update EKS security group
-    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values=$eks_sg Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp']" --output text | grep -q 2049; then
+    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values="$eks_sg" Name=from-port,Values=2049 Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp' && IsEgress==\`true\`]" --output text | grep -q 2049; then
         echo "Adding outbound rule to EKS security group"
-        aws ec2 authorize-security-group-egress --group-id "$eks_sg" --protocol tcp --port 2049 --cidr 0.0.0.0/0
+        aws ec2 authorize-security-group-egress --group-id "$eks_sg" --protocol tcp --port 2049 --source-group "$efs_sg"
     else
         echo "EKS security group already has outbound rule for port 2049"
     fi
 
     # Check and update EFS security group
-    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values=$efs_sg Name=from-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp']" --output text | grep -q "$eks_sg"; then
+    if ! aws ec2 describe-security-group-rules --filter Name=group-id,Values="$efs_sg" Name=from-port,Values=2049 Name=to-port,Values=2049 --query "SecurityGroupRules[?IpProtocol=='tcp' && IsEgress==\`false\`]" --output text | grep -q "$eks_sg"; then
         echo "Adding inbound rule to EFS security group"
         aws ec2 authorize-security-group-ingress --group-id "$efs_sg" --protocol tcp --port 2049 --source-group "$eks_sg"
     else
