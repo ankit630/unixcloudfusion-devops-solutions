@@ -1,8 +1,10 @@
 variables:
   PROJECT_PATH: medium-articles/todo-app
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG
 
 include:
   - local: 'gitlab/ci-cd/cicd-templates.yml'
+  - template: Security/Container-Scanning.gitlab-ci.yml
 
 stages:
   - test
@@ -21,5 +23,46 @@ build:
   artifacts:
     paths:
       - medium-articles/todo-app/target/todo-app.war
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+# Package the application using Docker-in-Docker (DinD)
+package:dind:
+  stage: package
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd $PROJECT_PATH
+    - docker build -t $DOCKER_IMAGE:dind .
+    # We don't push this image, it's just for demonstration
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+# Package the application using Kaniko and push to GitLab registry
+package:kaniko:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor 
+      --context $CI_PROJECT_DIR/$PROJECT_PATH
+      --dockerfile $CI_PROJECT_DIR/$PROJECT_PATH/Dockerfile
+      --destination $DOCKER_IMAGE:$CI_COMMIT_SHA
+      --destination $DOCKER_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+# GitLab Container Scanning
+container_scanning:
+  stage: scan
+  variables:
+    CS_IMAGE: $DOCKER_IMAGE:$CI_COMMIT_SHA
   rules:
     - if: $CI_COMMIT_BRANCH
