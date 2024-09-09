@@ -16,7 +16,6 @@ stages:
 variables:
   PROJECT_PATH: ${PROJECT_PATH:-./}
   SECRETS_ANALYZER_VERSION: "4.5"
-  SECRET_DETECTION_HISTORIC_SCAN: "true"
 
 
 .test_rules:
@@ -55,4 +54,5 @@ code-quality:
   stage: test
   extends:
     - .code_quality
+    - .test_rules
 
