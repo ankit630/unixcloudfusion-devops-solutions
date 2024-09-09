@@ -43,3 +43,7 @@ code-coverage:
   extends:
     - .code_coverage
     - .test_rules
+
+dependency_scanning:
+  stage: test
+  needs: [unit_tests]

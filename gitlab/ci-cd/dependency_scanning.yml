@@ -1,0 +1,7 @@
+.dependency_scanning:
+  stage: test
+  variables:
+    DS_JAVA_VERSION: 18
+    SECURE_LOG_LEVEL: "debug"
+  before_script:
+    - cd ${PROJECT_PATH}
