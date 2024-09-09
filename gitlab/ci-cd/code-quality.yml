@@ -8,10 +8,4 @@
     REPORT_FORMAT: html  # Generate an HTML report in addition to JSON
     TIMEOUT_SECONDS: 900  # Set a 15-minute timeout (default is 10 minutes)
     CODE_QUALITY_CATEGORIES: "complexity,duplication,style,security,bug_risk"
-  artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
-    paths:
-      - gl-code-quality-report.html
-    expire_in: 1 week
   allow_failure: true     # The job will not fail the pipeline if issues are found
