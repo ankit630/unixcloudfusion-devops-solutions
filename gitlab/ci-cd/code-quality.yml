@@ -1,5 +1,4 @@
 .code_quality:
-  extends: .code_quality
   stage: test
   variables:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
