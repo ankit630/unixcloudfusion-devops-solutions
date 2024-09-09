@@ -1,7 +1,7 @@
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
 .code_quality:
-  trigger:
-    include:
-      - template: Code-Quality.gitlab-ci.yml
     strategy: depend
   variables:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"

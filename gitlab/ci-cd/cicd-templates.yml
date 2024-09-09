@@ -55,4 +55,4 @@ code-quality:
   stage: test
   extends:
     - .code_quality
-    - .test_rules
+
