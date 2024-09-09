@@ -1,4 +1,4 @@
-code_quality:
+.code_quality:
   stage: test
   image: docker:20.10.12
   allow_failure: true
