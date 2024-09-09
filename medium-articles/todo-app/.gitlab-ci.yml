@@ -10,6 +10,8 @@ stages:
   - test
   - coverage
   - build
+  - package
+  - scan
 
 # The jobs from cicd-templates.yml will be included here
 
