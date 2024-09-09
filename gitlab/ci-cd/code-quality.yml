@@ -4,12 +4,12 @@
   allow_failure: true
   services:
     - name: 'docker:20.10.12-dind'
-      command: ['--tls=false', '--host=tcp://0.0.0.0:2375']
+      command: ['--tls=false']
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_CERT_PATH: ""
     DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://0.0.0.0:2375
+    DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_VERIFY: ""
     CODE_QUALITY_IMAGE_TAG: "0.96.0"
     CODE_QUALITY_IMAGE: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/ci-cd/codequality:$CODE_QUALITY_IMAGE_TAG"
