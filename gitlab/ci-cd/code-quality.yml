@@ -1,6 +1,6 @@
-code_quality:
+.code_quality:
   extends: .code_quality
-  stage: code_quality
+  stage: test
   variables:
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
     REPORT_FORMAT: html  # Generate an HTML report in addition to JSON
