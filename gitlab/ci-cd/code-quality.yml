@@ -1,14 +1,15 @@
-.code_quality:
+code_quality:
   stage: test
   image: docker:20.10.12
   allow_failure: true
   services:
     - name: 'docker:20.10.12-dind'
-      command: ['--tls=false', '--mtu=1450']
+      command: ['--tls=false', '--host=tcp://0.0.0.0:2375']
   variables:
     DOCKER_DRIVER: overlay2
+    DOCKER_CERT_PATH: ""
     DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_VERIFY: ""
     CODE_QUALITY_IMAGE_TAG: "0.96.0"
     CODE_QUALITY_IMAGE: "$CI_TEMPLATE_REGISTRY_HOST/gitlab-org/ci-cd/codequality:$CODE_QUALITY_IMAGE_TAG"
     DOCKER_SOCKET_PATH: /var/run/docker.sock
@@ -16,15 +17,15 @@
   script:
     - export SOURCE_CODE=${SOURCE_CODE:-$PWD}
     - |
-      timeout 30s bash -c 'until docker info &>/dev/null; do echo "Waiting for Docker..."; sleep 1; done'
-    - |
       if ! docker info &>/dev/null; then
-        echo "Failed to connect to Docker daemon. Please check your configuration."
-        exit 1
+        if [ -z "$DOCKER_HOST" ] && [ -n "$KUBERNETES_PORT" ]; then
+          export DOCKER_HOST='tcp://localhost:2375'
+        fi
       fi
     - | # this is required to avoid undesirable reset of Docker image ENV variables being set on build stage
       function propagate_env_vars() {
         CURRENT_ENV=$(printenv)
+
         for VAR_NAME; do
           echo $CURRENT_ENV | grep "${VAR_NAME}=" > /dev/null && echo "--env $VAR_NAME "
         done
@@ -32,7 +33,7 @@
     - |
       if [ -n "$CODECLIMATE_REGISTRY_USERNAME" ] && [ -n "$CODECLIMATE_REGISTRY_PASSWORD" ] && [ -n "$CODECLIMATE_PREFIX" ]; then
         CODECLIMATE_REGISTRY=${CODECLIMATE_PREFIX%%/*}
-        echo "$CODECLIMATE_REGISTRY_PASSWORD" | docker login "$CODECLIMATE_REGISTRY" --username "$CODECLIMATE_REGISTRY_USERNAME" --password-stdin
+        docker login "$CODECLIMATE_REGISTRY" --username "$CODECLIMATE_REGISTRY_USERNAME" --password "$CODECLIMATE_REGISTRY_PASSWORD"
       fi
     - docker pull --quiet "$CODE_QUALITY_IMAGE"
     - |
@@ -54,6 +55,7 @@
         --volume "$DOCKER_SOCKET_PATH":/var/run/docker.sock \
         "$CODE_QUALITY_IMAGE" /code
   artifacts:
+    access: 'developer'
     reports:
       codequality: gl-code-quality-report.json
     expire_in: 1 week

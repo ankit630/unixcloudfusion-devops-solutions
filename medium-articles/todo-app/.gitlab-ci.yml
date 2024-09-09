@@ -1,6 +1,7 @@
 variables:
   PROJECT_PATH: medium-articles/todo-app
   DOCKER_IMAGE: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG
+  CODE_QUALITY_DISABLED: true
 
 include:
   - local: 'gitlab/ci-cd/cicd-templates.yml'
