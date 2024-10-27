@@ -1,0 +1,84 @@
+- name: Ensure test-ssh user exists
+  user:
+    name: test-ssh
+    state: present
+    system: yes
+
+- name: Ensure clp group exists
+  group:
+    name: clp
+    state: present
+
+- name: Add test-ssh user to clp group
+  user:
+    name: test-ssh
+    groups: clp
+    append: yes
+    
+- name: Install NGINX
+  apt:
+    name: nginx
+    state: present
+
+- name: Configure NGINX to run as test-ssh user
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: '^user'
+    line: 'user test-ssh clp;'
+  notify: Reload NGINX
+
+- name: Create SSL directory for Nginx
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    mode: '0755'
+
+- name: Copy SSL certificate to Nginx directory
+  copy:
+    src: "/root/magento_credentials/{{ magento_domain }}.crt"
+    dest: "/etc/nginx/ssl/{{ magento_domain }}.crt"
+    remote_src: yes
+
+- name: Copy SSL key to Nginx directory
+  copy:
+    src: "/root/magento_credentials/{{ magento_domain }}.key"
+    dest: "/etc/nginx/ssl/{{ magento_domain }}.key"
+    remote_src: yes
+
+- name: Ensure proper permissions for Nginx SSL files
+  file:
+    path: "/etc/nginx/ssl/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - "{{ magento_domain }}.crt"
+    - "{{ magento_domain }}.key"
+
+- name: Copy Magento NGINX configuration
+  template:
+    src: magento_nginx.conf.j2
+    dest: /etc/nginx/sites-available/magento.conf
+  notify: Test NGINX configuration
+
+- name: Enable Magento NGINX configuration
+  file:
+    src: /etc/nginx/sites-available/magento.conf
+    dest: /etc/nginx/sites-enabled/magento.conf
+    state: link
+  notify:
+    - Test NGINX configuration
+    - Restart Nginx
+
+- name: Remove default NGINX configuration
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Test NGINX configuration
+
+- name: Set up log rotation for phpMyAdmin NGINX logs
+  template:
+    src: phpmyadmin-logrotate.j2
+    dest: /etc/logrotate.d/nginx-phpmyadmin
+    mode: '0644'
+  notify: Reload logrotate

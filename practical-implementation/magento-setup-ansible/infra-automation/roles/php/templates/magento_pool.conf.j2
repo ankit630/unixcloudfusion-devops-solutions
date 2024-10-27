@@ -1,0 +1,11 @@
+[magento]
+user = test-ssh
+group = clp
+listen = /run/php/php8.1-fpm-magento.sock
+listen.owner = test-ssh
+listen.group = clp
+pm = dynamic
+pm.max_children = 50
+pm.start_servers = 5
+pm.min_spare_servers = 5
+pm.max_spare_servers = 35

@@ -1,0 +1,30 @@
+- name: Ensure directory for Magento credentials exists
+  file:
+    path: /root/magento_credentials
+    state: directory
+    mode: '0700'
+  when: generate_ssl_cert_magento | default(false) | bool
+
+- name: Generate self-signed SSL certificate
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout /root/magento_credentials/{{ magento_domain }}.key
+    -out /root/magento_credentials/{{ magento_domain }}.crt
+    -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN={{ magento_domain }}"
+  args:
+    creates: /root/magento_credentials/{{ magento_domain }}.crt
+  when: generate_ssl_cert_magento | default(false) | bool
+
+- name: Ensure proper permissions for SSL certificate and key
+  file:
+    path: "/root/magento_credentials/{{ item }}"
+    mode: '0600'
+  loop:
+    - "{{ magento_domain }}.crt"
+    - "{{ magento_domain }}.key"
+  when: generate_ssl_cert_magento | default(false) | bool
+
+- name: Display certificate generation status
+  debug:
+    msg: "SSL certificate for {{ magento_domain }} has been generated and stored in /root/magento_credentials/"
+  when: generate_ssl_cert_magento | default(false) | bool

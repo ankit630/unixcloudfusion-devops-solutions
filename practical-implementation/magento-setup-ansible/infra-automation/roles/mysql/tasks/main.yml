@@ -1,0 +1,146 @@
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download MariaDB GPG key
+  get_url:
+    url: https://mariadb.org/mariadb_release_signing_key.asc
+    dest: /etc/apt/keyrings/mariadb-keyring.asc
+    mode: '0644'
+
+- name: Create MariaDB sources file
+  copy:
+    content: |
+      # MariaDB 10.6 repository list
+      # https://mariadb.org/download/
+      X-Repolib-Name: MariaDB
+      Types: deb
+      URIs: https://mirror.rackspace.com/mariadb/repo/10.6/debian
+      Suites: bullseye
+      Components: main
+      Signed-By: /etc/apt/keyrings/mariadb-keyring.asc
+    dest: /etc/apt/sources.list.d/mariadb.sources
+    mode: '0644'
+
+- name: Add Debian Bullseye repository
+  copy:
+    content: "deb http://deb.debian.org/debian bullseye main"
+    dest: /etc/apt/sources.list.d/bullseye.list
+    mode: '0644'
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install MariaDB 10.6
+  apt:
+    name:
+      - mariadb-server-10.6
+      - mariadb-server-core-10.6
+      - mariadb-client-10.6
+    state: present
+
+- name: Install Python MySQL module
+  apt:
+    name:
+      - python3-pymysql
+    state: present
+
+- name: Ensure MariaDB is started and enabled
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: Check MariaDB version
+  command: mysql --version
+  register: mariadb_version
+  changed_when: false
+
+- name: Display MariaDB version
+  debug:
+    var: mariadb_version.stdout
+
+- name: Check if we can connect to MariaDB without password
+  command: mysql -u root -e "SELECT 1"
+  register: mysql_connect_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Display MySQL connection check result
+  debug:
+    var: mysql_connect_check
+
+- name: Set fact for passwordless connection
+  set_fact:
+    mariadb_passwordless: "{{ mysql_connect_check.rc == 0 }}"
+
+- name: Generate MariaDB root password if needed
+  set_fact:
+    mariadb_root_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=16') }}"
+  when: not mariadb_passwordless
+
+- name: Set MariaDB root password if needed
+  mysql_user:
+    name: root
+    host_all: yes
+    password: "{{ mariadb_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: not mariadb_passwordless
+
+- name: Create Magento database
+  mysql_db:
+    name: magento
+    state: present
+    login_user: root
+    login_password: ""
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create Magento database user
+  mysql_user:
+    name: magento
+    password: "{{ magento_db_password }}"
+    priv: 'magento.*:ALL'
+    host: '%'
+    state: present
+    login_user: root
+    login_password: ""
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Ensure Magento user has correct privileges
+  mysql_query:
+    login_user: root
+    login_password: ""
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    query:
+      - GRANT ALL PRIVILEGES ON magento.* TO 'magento'@'%' IDENTIFIED BY '{{ magento_db_password }}'
+      - FLUSH PRIVILEGES
+  changed_when: false
+  vars:
+    magento_db_password: "{{ lookup('env', 'MAGENTO_DB_PASSWORD') }}"
+
+- name: Set fact for Magento database credentials
+  set_fact:
+    magento_db_user: magento
+    magento_db_name: magento
+
+- name: Ensure credential directory exists
+  file:
+    path: /root/magento_credentials
+    state: directory
+    mode: '0700'
+
+- name: Save MariaDB credentials
+  copy:
+    content: |
+      MariaDB Root Authentication: {{ 'Passwordless' if mariadb_passwordless else 'Password-protected' }}
+      {% if not mariadb_passwordless %}
+      MariaDB Root Password: {{ mariadb_root_password }}
+      {% endif %}
+      Magento Database Name: magento
+      Magento Database User: magento
+      Magento Database Password: {{ magento_db_password }}
+    dest: /root/magento_credentials/mariadb_credentials.txt
+    mode: '0600'

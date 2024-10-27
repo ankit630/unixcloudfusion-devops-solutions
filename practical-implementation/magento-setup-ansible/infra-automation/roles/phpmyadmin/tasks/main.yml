@@ -1,0 +1,53 @@
+- name: Install PHPMyAdmin
+  apt:
+    name: phpmyadmin
+    state: present
+
+- name: Set correct ownership and permissions for PHPMyAdmin
+  file:
+    path: /usr/share/phpmyadmin
+    owner: test-ssh
+    group: clp
+    mode: '0755'
+    recurse: yes
+
+- name: Ensure phpMyAdmin configuration directory exists
+  file:
+    path: /etc/phpmyadmin
+    state: directory
+    mode: '0755'
+
+- name: Generate blowfish secret for phpMyAdmin
+  set_fact:
+    phpmyadmin_blowfish_secret: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"
+
+- name: Create phpMyAdmin configuration file
+  template:
+    src: phpmyadmin.config.inc.php.j2
+    dest: /etc/phpmyadmin/config.inc.php
+    mode: '0644'
+  notify: Restart PHP-FPM
+
+- name: Configure PHPMyAdmin NGINX vhost
+  template:
+    src: phpmyadmin.conf.j2
+    dest: /etc/nginx/sites-available/phpmyadmin.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload NGINX
+
+- name: Enable PHPMyAdmin NGINX vhost
+  file:
+    src: /etc/nginx/sites-available/phpmyadmin.conf
+    dest: /etc/nginx/sites-enabled/phpmyadmin.conf
+    state: link
+  notify: Reload NGINX
+
+- name: Enable PHPMyAdmin NGINX vhost
+  file:
+    src: /etc/nginx/sites-available/phpmyadmin.conf
+    dest: /etc/nginx/sites-enabled/phpmyadmin.conf
+    state: link
+  notify: Reload NGINX
+
