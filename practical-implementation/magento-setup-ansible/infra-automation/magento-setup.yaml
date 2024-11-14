@@ -1,0 +1,32 @@
+---
+- name: Configure Magento 2 Environment
+  hosts: all
+  become: yes
+  vars:
+    magento_domain: "test.mgt.com"
+    phpmyadmin_domain: "pma.mgt.com"
+    magento_user: "test-ssh"
+    magento_group: "clp"
+    magento_db_password: "{{ lookup('env', 'MAGENTO_DB_PASSWORD') }}"
+    magento_admin_frontname: "admin"
+    magento_admin_password: "{{ lookup('env', 'MAGENTO_ADMIN_PASSWORD') }}"
+    magento_admin_email: "ankit630@gmail.com"
+    magento_admin_firstname: "ankit"
+    magento_admin_lastname: "mittal"
+    magento_admin_user: "admin"
+    phpmyadmin_blowfish_secret: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=16') }}"
+    generate_ssl_cert_magento: true
+
+  roles:
+    - role: common
+    - role: ssl_cert
+    - role: php
+    - role: mysql
+    - role: nginx
+    - role: elasticsearch
+    - role: redis
+    - role: magento2
+    - role: phpmyadmin
+    - role: varnish
+  handlers:
+    - include: roles/handlers/main.yml

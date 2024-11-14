@@ -1,0 +1,370 @@
+- name: Add entry to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 test.mgt.com"
+    state: present
+
+- name: Create Magento user
+  user:
+    name: magento
+    shell: /bin/bash
+    home: /home/magento
+    create_home: yes
+
+- name: Install Composer
+  apt:
+    name: composer
+    state: present
+
+- name: Create Magento installation directory
+  file:
+    path: /var/www/html/magento
+    state: directory
+    owner: magento
+    group: magento
+    mode: '0755'
+
+- name: Ensure .composer directory exists
+  file:
+    path: /home/magento/.composer
+    state: directory
+    owner: magento
+    group: magento
+    mode: '0755'
+
+- name: Create Composer auth.json file
+  become: yes
+  become_user: magento
+  copy:
+    content: |
+      {
+        "http-basic": {
+          "repo.magento.com": {
+            "username": "{{ lookup('env', 'MAGENTO_PUBLIC_KEY') }}",
+            "password": "{{ lookup('env', 'MAGENTO_PRIVATE_KEY') }}"
+          }
+        }
+      }
+    dest: /home/magento/.composer/auth.json
+    mode: '0600'
+
+- name: Install Magento 2 via Composer
+  become: yes
+  become_user: magento
+  composer:
+    command: create-project
+    arguments: --repository-url=https://repo.magento.com/ magento/project-community-edition . --ignore-platform-reqs
+    working_dir: /var/www/html/magento
+  environment:
+    COMPOSER_HOME: /home/magento/.composer
+    MAGENTO_PUBLIC_KEY: "{{ lookup('env', 'MAGENTO_PUBLIC_KEY') }}"
+    MAGENTO_PRIVATE_KEY: "{{ lookup('env', 'MAGENTO_PRIVATE_KEY') }}"
+
+- name: Set ownership of Magento files
+  file:
+    path: /var/www/html/magento
+    owner: magento
+    group: magento
+    recurse: yes
+
+- name: Check MariaDB version
+  command: mysql --version
+  register: mariadb_version
+  changed_when: false
+
+- name: Display MariaDB version
+  debug:
+    var: mariadb_version.stdout
+
+- name: Debug Magento database credentials
+  debug:
+    msg:
+      - "Magento DB User: {{ magento_db_user }}"
+      - "Magento DB Name: {{ magento_db_name }}"
+      - "Magento DB Password: {{ magento_db_password }}"
+
+- name: Configure Magento 2
+  become: yes
+  become_user: magento
+  command: >
+    php bin/magento setup:install
+    --base-url=https://test.mgt.com
+    --db-host=localhost
+    --db-name={{ magento_db_name }}
+    --db-user={{ magento_db_user }}
+    --db-password={{ magento_db_password }}
+    --admin-firstname={{ magento_admin_firstname }} 
+    --admin-lastname={{ magento_admin_lastname }} 
+    --admin-email={{ magento_admin_email }} 
+    --admin-user=admin
+    --admin-password={{ magento_admin_password }}
+    --language=en_US
+    --currency=USD
+    --timezone=America/Chicago
+    --use-rewrites=1
+    --backend-frontname={{ magento_admin_frontname }}
+    --search-engine=elasticsearch7
+    --elasticsearch-host=localhost
+  args:
+    chdir: /var/www/html/magento
+
+- name: Configure Magento to use Redis for cache
+  command: >
+    php bin/magento setup:config:set 
+    --cache-backend=redis 
+    --cache-backend-redis-server=127.0.0.1 
+    --cache-backend-redis-db=0
+  args:
+    chdir: /var/www/html/magento
+
+- name: Configure Magento to use Redis for sessions
+  command: >
+    php bin/magento setup:config:set 
+    --session-save=redis 
+    --session-save-redis-host=127.0.0.1 
+    --session-save-redis-db=1
+  args:
+    chdir: /var/www/html/magento
+
+- name: Configure Magento to use Varnish
+  command: >
+    php bin/magento setup:config:set 
+    --http-cache-hosts=127.0.0.1:6081
+  args:
+    chdir: /var/www/html/magento
+
+- name: Enable Varnish caching in Magento
+  command: php bin/magento config:set system/full_page_cache/caching_application 2
+  args:
+    chdir: /var/www/html/magento
+
+- name: Flush Magento cache
+  command: php bin/magento cache:flush
+  args:
+    chdir: /var/www/html/magento
+
+- name: Set correct permissions for Magento files
+  file:
+    path: /var/www/html/magento
+    owner: test-ssh
+    group: clp
+    mode: 'u=rwX,g=rX,o='
+    recurse: yes
+
+- name: Set more permissive permissions for specific directories
+  file:
+    path: "{{ item }}"
+    mode: 'u=rwX,g=rwX,o='
+    recurse: yes
+  loop:
+    - /var/www/html/magento/var
+    - /var/www/html/magento/pub/media
+    - /var/www/html/magento/app/etc
+
+- name: Ensure Magento CLI is executable
+  file:
+    path: /var/www/html/magento/bin/magento
+    mode: 'u+x,g+x'
+
+- name: Save Magento admin credentials
+  copy:
+    content: |
+      Magento Admin URL: https://test.mgt.com/admin
+      Magento Admin Username: admin
+      Magento Admin Password: {{ magento_admin_password }}
+    dest: /root/magento_credentials/magento_admin_credentials.txt
+    mode: '0600'
+
+- name: Configure Magento for HTTP (Development Environment)
+  block:
+    - name: Enable HTTPS in frontend
+      command: bin/magento config:set web/secure/use_in_frontend 1
+      args:
+        chdir: /var/www/html/magento
+
+    - name: Enable HTTPS in admin
+      command: bin/magento config:set web/secure/use_in_adminhtml 1
+      args:
+        chdir: /var/www/html/magento
+
+- name: Get current admin frontend name
+  command: bin/magento info:adminuri
+  args:
+    chdir: /var/www/html/magento
+  register: current_admin_frontend
+  changed_when: false
+
+- name: Set admin frontend name
+  command: bin/magento setup:config:set --backend-frontname="{{ magento_admin_frontname }}"
+  args:
+    chdir: /var/www/html/magento
+  when: current_admin_frontend.stdout != magento_admin_frontname
+
+- name: Enable URL rewrites
+  command: bin/magento config:set web/seo/use_rewrites 1
+  args:
+    chdir: /var/www/html/magento
+
+- name: Set base URLs
+  command: "{{ item }}"
+  loop:
+    - bin/magento config:set web/unsecure/base_url https://{{ magento_domain }}/
+    - bin/magento config:set web/secure/base_url https://{{ magento_domain }}/
+  args:
+    chdir: /var/www/html/magento
+
+- name: Flush Magento cache
+  command: bin/magento cache:flush
+  args:
+    chdir: /var/www/html/magento
+
+- name: Reindex Magento
+  command: bin/magento indexer:reindex
+  args:
+    chdir: /var/www/html/magento
+
+- name: Save Magento admin URL
+  copy:
+    content: "Magento Admin URL: https://{{ magento_domain }}/{{ magento_admin_frontname }}"
+    dest: /root/magento_admin_url.txt
+    mode: '0600'
+  notify:
+    - Restart PHP-FPM
+    - Restart Nginx
+
+- name: Ensure services are restarted
+  meta: flush_handlers
+
+- name: Wait for Magento to be fully set up
+  wait_for:
+    timeout: 10
+
+- name: Verify Magento installation and admin access
+  uri:
+    url: "https://{{ magento_domain }}/{{ magento_admin_frontname }}"
+    method: GET
+    status_code: 200
+    validate_certs: no
+  register: admin_access_result
+  retries: 3
+  delay: 10
+  until: admin_access_result.status == 200
+  ignore_errors: yes
+
+- name: Display Magento admin access result
+  debug:
+    var: admin_access_result
+
+- name: Check if admin user exists
+  command: php8.1 bin/magento admin:user:unlock {{ magento_admin_user }}
+  args:
+    chdir: /var/www/html/magento
+  register: admin_user_check
+  changed_when: false
+  failed_when: false
+
+- name: Create new admin user if not exists
+  command: >
+    php8.1 bin/magento admin:user:create 
+    --admin-user={{ magento_admin_user }} 
+    --admin-password={{ magento_admin_password }} 
+    --admin-email={{ magento_admin_email }} 
+    --admin-firstname={{ magento_admin_firstname }} 
+    --admin-lastname={{ magento_admin_lastname }}
+  args:
+    chdir: /var/www/html/magento
+  when: admin_user_check.rc != 0
+
+- name: Unlock admin user
+  command: php8.1 bin/magento admin:user:unlock {{ magento_admin_user }}
+  args:
+    chdir: /var/www/html/magento
+  when: admin_user_check.rc == 0
+
+- name: Create or update admin user
+  command: >
+    php8.1 bin/magento admin:user:create 
+    --admin-user=admin 
+    --admin-password="{{ magento_admin_password }}" 
+    --admin-email={{ magento_admin_email }} 
+    --admin-firstname={{ magento_admin_firstname }}  
+    --admin-lastname={{ magento_admin_lastname }} 
+  args:
+    chdir: /var/www/html/magento
+  register: admin_user_result
+  changed_when: "'created' in admin_user_result.stdout or 'updated' in admin_user_result.stdout"
+  failed_when: 
+    - admin_user_result.rc != 0
+    - "'already exists' not in admin_user_result.stderr"
+
+- name: Display admin user creation/update result
+  debug:
+    var: admin_user_result.stdout_lines
+
+- name: Flush Magento cache
+  command: php8.1 bin/magento cache:flush
+  args:
+    chdir: /var/www/html/magento
+
+- name: Disable Two-Factor Authentication modules
+  command: php8.1 bin/magento module:disable Magento_AdminAdobeImsTwoFactorAuth Magento_TwoFactorAuth
+  args:
+    chdir: /var/www/html/magento
+
+- name: Compile Dependency Injection
+  command: php8.1 bin/magento setup:di:compile
+  args:
+    chdir: /var/www/html/magento
+
+- name: Deploy static content
+  command: php8.1 bin/magento setup:static-content:deploy -f
+  args:
+    chdir: /var/www/html/magento
+
+- name: Reindex Magento
+  command: php8.1 bin/magento indexer:reindex
+  args:
+    chdir: /var/www/html/magento
+
+- name: Flush Magento cache
+  command: php8.1 bin/magento cache:flush
+  args:
+    chdir: /var/www/html/magento
+
+- name: Check module status
+  command: php8.1 bin/magento module:status
+  args:
+    chdir: /var/www/html/magento
+  register: module_status
+  changed_when: false
+
+- name: Display module status
+  debug:
+    var: module_status.stdout_lines
+
+- name: Set correct permissions for Magento files
+  file:
+    path: /var/www/html/magento
+    owner: test-ssh
+    group: clp
+    mode: 'u=rwX,g=rX,o='
+    recurse: yes
+
+- name: Set more permissive permissions for specific directories
+  file:
+    path: "{{ item }}"
+    owner: test-ssh
+    group: clp
+    mode: 'u=rwX,g=rwX,o='
+    recurse: yes
+  loop:
+    - /var/www/html/magento/var
+    - /var/www/html/magento/pub/media
+    - /var/www/html/magento/app/etc
+
+- name: Ensure Magento CLI is executable
+  file:
+    path: /var/www/html/magento/bin/magento
+    owner: test-ssh
+    group: clp
+    mode: 'u+x,g+x'

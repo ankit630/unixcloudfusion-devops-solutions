@@ -1,0 +1,31 @@
+- name: Install Varnish
+  apt:
+    name: varnish
+    state: present
+
+- name: Configure Varnish for Magento
+  template:
+    src: default.vcl.j2
+    dest: /etc/varnish/default.vcl
+  notify: Restart Varnish
+
+- name: Validate Varnish configuration
+  command: varnishd -C -f /etc/varnish/default.vcl
+  changed_when: false
+  register: varnish_config_check
+  failed_when: varnish_config_check.rc != 0
+
+- name: Display Varnish configuration check result
+  debug:
+    var: varnish_config_check.stdout_lines
+
+- name: Ensure Varnish is started and enabled
+  systemd:
+    name: varnish
+    state: started
+    enabled: yes
+  register: varnish_service_result
+
+- name: Display Varnish service status
+  debug:
+    var: varnish_service_result

@@ -1,0 +1,27 @@
+- name: Reload NGINX
+  service:
+    name: nginx
+    state: reloaded
+
+- name: Test NGINX configuration
+  command: nginx -t
+  changed_when: false
+  notify: Reload NGINX
+
+- name: Restart Varnish
+  service:
+    name: varnish
+    state: restarted
+
+- name: Restart PHP-FPM
+  systemd:
+    name: php8.1-fpm
+    state: restarted
+
+- name: Restart Nginx
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: Reload logrotate
+  command: logrotate /etc/logrotate.conf

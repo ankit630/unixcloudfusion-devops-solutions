@@ -1,0 +1,100 @@
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: Add sury.org PHP repository key
+  apt_key:
+    url: https://packages.sury.org/php/apt.gpg
+    state: present
+
+- name: Add sury.org PHP repository
+  apt_repository:
+    repo: "deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main"
+    state: present
+    filename: php.list
+
+- name: Remove other PHP versions
+  apt:
+    name:
+      - php8.3
+      - php8.3-*
+    state: absent
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install PHP and required extensions for Magento 2
+  apt:
+    name:
+      - php8.1
+      - php8.1-cli
+      - php8.1-fpm
+      - php8.1-common
+      - php8.1-dom
+      - php8.1-mysql
+      - php8.1-zip
+      - php8.1-gd
+      - php8.1-mbstring
+      - php8.1-curl
+      - php8.1-xml
+      - php8.1-bcmath
+      - php8.1-intl
+      - php8.1-soap
+      - php8.1-ldap
+      - php8.1-xsl
+      - php8.1-opcache
+    state: present
+
+- name: Ensure PHP 8.1 is the default version
+  alternatives:
+    name: php
+    path: /usr/bin/php8.1
+  register: php_cli_alternative
+
+- name: Display PHP CLI alternative update result
+  debug:
+    var: php_cli_alternative
+
+- name: Verify PHP version
+  command: php -v
+  register: php_version
+  changed_when: false
+
+- name: Display PHP version
+  debug:
+    var: php_version.stdout_lines
+
+- name: Create custom PHP-FPM pool configuration
+  template:
+    src: magento_pool.conf.j2
+    dest: /etc/php/8.1/fpm/pool.d/magento.conf
+  notify: Restart PHP-FPM
+
+- name: Ensure PHP-FPM service is started and enabled
+  systemd:
+    name: php8.1-fpm
+    state: started
+    enabled: yes
+
+- name: Set PHP memory_limit
+  lineinfile:
+    path: /etc/php/8.1/fpm/php.ini
+    regexp: '^memory_limit ='
+    line: 'memory_limit = 756M'
+  notify: Restart PHP-FPM
+
+- name: Set PHP max_execution_time
+  lineinfile:
+    path: /etc/php/8.1/fpm/php.ini
+    regexp: '^max_execution_time ='
+    line: 'max_execution_time = 1800'
+  notify: Restart PHP-FPM
+
+- name: Set PHP zlib.output_compression
+  lineinfile:
+    path: /etc/php/8.1/fpm/php.ini
+    regexp: '^zlib.output_compression ='
+    line: 'zlib.output_compression = On'
+  notify: Restart PHP-FPM

@@ -1,0 +1,31 @@
+server {
+    listen 80;
+    server_name {{ phpmyadmin_domain }};
+    root /usr/share/phpmyadmin;
+    index index.php index.html index.htm;
+
+    # Logging configuration
+    access_log /var/log/nginx/phpmyadmin_access.log;
+    error_log /var/log/nginx/phpmyadmin_error.log;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm-magento.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+
+        # Additional logging for PHP requests
+        fastcgi_intercept_errors on;
+        error_log /var/log/nginx/phpmyadmin_php_error.log;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
