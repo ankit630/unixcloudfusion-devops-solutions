@@ -6,7 +6,7 @@ metadata:
 provisioner: efs.csi.aws.com
 parameters:
   provisioningMode: efs-ap
-  fileSystemId: fs-02cd35570d6b829a6
+  fileSystemId: fs-0306b7da9301d9df4
   directoryPerms: "700"
   gidRangeStart: "1000"
   gidRangeEnd: "2000"
@@ -25,7 +25,7 @@ spec:
   storageClassName: efs-sc
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: fs-02cd35570d6b829a6
+    volumeHandle: fs-0306b7da9301d9df4
   mountOptions:
     - iam
 
