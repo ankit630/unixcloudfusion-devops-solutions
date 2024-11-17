@@ -8,7 +8,7 @@ bash -x terraform/scripts/manage_terraform.sh terraform/components/todoapp/efs/ 
 bash -x terraform/scripts/manage_terraform.sh terraform/components/todoapp/ecr/ apply -auto-approve
 
 ## Install the Argocd
-cd ../../../argocd/
+cd argocd/
 bash -x install-argocd.sh
 
 ## Install the Secrets manager in EKS
