@@ -18,22 +18,30 @@ install_terraform() {
     
     # Install required packages
     apt-get update
-    apt-get install -y curl wget unzip
+    apt-get install -y curl wget unzip jq
 
-    # Get latest Terraform version
-    LATEST_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | grep current_version | cut -d '"' -f 4)
+    # Get latest Terraform version using jq
+    LATEST_VERSION=$(curl -s https://releases.hashicorp.com/terraform/index.json | jq -r '.versions | keys[]' | grep -v 'beta\|rc\|alpha' | sort -rV | head -n 1)
     
+    if [ -z "$LATEST_VERSION" ]; then
+        echo "Error: Could not determine latest Terraform version"
+        exit 1
+    }
+
     echo "Installing Terraform version: ${LATEST_VERSION}"
     
     # Download and install Terraform
     cd /tmp
     wget "https://releases.hashicorp.com/terraform/${LATEST_VERSION}/terraform_${LATEST_VERSION}_linux_amd64.zip"
-    unzip "terraform_${LATEST_VERSION}_linux_amd64.zip"
+    unzip -o "terraform_${LATEST_VERSION}_linux_amd64.zip"
     mv terraform /usr/local/bin/
     rm "terraform_${LATEST_VERSION}_linux_amd64.zip"
     
     # Verify installation
-    terraform version
+    if ! terraform version; then
+        echo "Error: Terraform installation failed"
+        exit 1
+    fi
     
     echo "Terraform installation complete"
 }
