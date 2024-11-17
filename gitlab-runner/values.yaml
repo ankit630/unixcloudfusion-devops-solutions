@@ -225,7 +225,7 @@ rbac:
   ## DEPRECATED: Please use `serviceAccount.annotations` instead
   ##
   serviceAccountAnnotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::891377076794:role/GitLabRunnerRole"
+    eks.amazonaws.com/role-arn: "arn:aws:iam::992382411624:role/GitLabRunnerRole"
 
   ## Use podSecurity Policy
   ## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
