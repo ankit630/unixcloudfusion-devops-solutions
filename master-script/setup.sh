@@ -3,16 +3,9 @@ cd ../aws/EKS/install-eks/
 bash -x create-eks-cluster.sh
 
 ## Install the Terraform
-cd ../../../setup_terraform/scripts/
-bash -x setup_terraform_backend.sh
-
-## Install the EFS Volume
-cd ../../aws/efs/todoapp/
-bash -x setup-efs.sh
-
-## Create the ECR Repository
-cd ../../ecr/todo-app
-bash -x create_ecr.sh
+cd ../../../
+bash -x terraform/scripts/manage_terraform.sh terraform/components/todoapp/efs/ apply -auto-approve
+bash -x terraform/scripts/manage_terraform.sh terraform/components/todoapp/ecr/ apply -auto-approve
 
 ## Install the Argocd
 cd ../../../argocd/
