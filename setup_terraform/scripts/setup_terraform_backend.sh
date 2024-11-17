@@ -7,7 +7,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-apt install jq -y
+apt install curl jq unzip aws -y
 
 # Check for required commands
 for cmd in aws jq; do
