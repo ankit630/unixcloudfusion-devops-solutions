@@ -18,6 +18,7 @@ install_terraform() {
     
     # Install required packages
     apt-get update
+    apt-get update
     apt-get install -y curl wget unzip jq
 
     # Get latest Terraform version using jq
@@ -26,7 +27,7 @@ install_terraform() {
     if [ -z "$LATEST_VERSION" ]; then
         echo "Error: Could not determine latest Terraform version"
         exit 1
-    }
+    fi
 
     echo "Installing Terraform version: ${LATEST_VERSION}"
     
@@ -99,6 +100,7 @@ manage_component() {
 
     # Navigate to component directory
     cd "$component_path"
+    chmod +x ../../../scripts/setup_terraform_backend.sh
 
     # Setup backend for this component
     echo "Setting up backend configuration..."
