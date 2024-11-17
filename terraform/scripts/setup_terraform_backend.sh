@@ -29,8 +29,7 @@ setup_backend() {
             --key-schema AttributeName=LockID,KeyType=HASH \
             --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
             --region "$region" \
-            --tags Key=Environment,Value=Production \
-                  Key=Project,Value="$component"
+            --tags Key=Environment,Value=Production Key=Project,Value="$component"
         
         # Wait for table to be created
         echo "Waiting for DynamoDB table to be ready..."
@@ -43,17 +42,22 @@ setup_backend() {
     if ! aws s3api head-bucket --bucket "$bucket_name" 2>/dev/null; then
         echo "Creating S3 bucket: $bucket_name"
         if [ "$region" = "us-east-1" ]; then
+            # Create bucket
             aws s3api create-bucket \
                 --bucket "$bucket_name" \
-                --region "$region" \
-                --tags "Key=Environment,Value=Production" "Key=Project,Value=$component"
+                --region "$region"
         else
+            # Create bucket in non-us-east-1 region
             aws s3api create-bucket \
                 --bucket "$bucket_name" \
                 --create-bucket-configuration LocationConstraint="$region" \
-                --region "$region" \
-                --tags "Key=Environment,Value=Production" "Key=Project,Value=$component"
+                --region "$region"
         fi
+
+        # Add tags to bucket separately
+        aws s3api put-bucket-tagging \
+            --bucket "$bucket_name" \
+            --tagging 'TagSet=[{Key=Environment,Value=Production},{Key=Project,Value=terraform-backend}]'
         
         # Enable versioning
         echo "Enabling versioning on S3 bucket..."
