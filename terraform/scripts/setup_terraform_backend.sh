@@ -1,18 +1,21 @@
 #!/bin/bash
 set -e
 
-# Default values
-DEFAULT_COMPONENT="infra-automation"
-DEFAULT_REGION=$(aws configure get region || echo "us-east-1")
+# Function to sanitize names for DynamoDB
+sanitize_name() {
+    # Replace '/' with '-' and any other invalid characters
+    echo "$1" | tr '/' '-'
+}
 
 # Function to setup backend configuration for a component
 setup_backend() {
     # Use default value if no argument is provided
-    local component="${1:-$DEFAULT_COMPONENT}"
+    local component="${1:-infra-automation}"
     local account_id=$(aws sts get-caller-identity --query Account --output text)
-    local region="${AWS_REGION:-$DEFAULT_REGION}"
+    local region="${AWS_REGION:-$(aws configure get region)}"
     local bucket_name="terraform-state-${account_id}"
-    local dynamodb_table="terraform-locks-${component}"
+    # Sanitize the component name for DynamoDB table
+    local dynamodb_table="terraform-locks-$(sanitize_name $component)"
 
     echo "Setting up Terraform backend with:"
     echo "Component: $component"
@@ -88,7 +91,7 @@ setup_backend() {
 terraform {
   backend "s3" {
     bucket         = "$bucket_name"
-    key            = "terraform-${component}.tfstate"
+    key            = "terraform-$component.tfstate"
     region         = "$region"
     dynamodb_table = "$dynamodb_table"
     encrypt        = true
@@ -97,28 +100,14 @@ terraform {
 EOF
 
     echo "Backend configuration created for $component"
-    echo "State file will be stored at: s3://$bucket_name/terraform-${component}.tfstate"
+    echo "State file will be stored at: s3://$bucket_name/terraform-$component.tfstate"
 }
 
-# Show usage information
-show_usage() {
-    echo "Usage: $0 [component-name]"
-    echo "If no component name is provided, default value '$DEFAULT_COMPONENT' will be used"
-    echo ""
-    echo "Environment Variables:"
-    echo "  AWS_REGION: AWS region (default: $DEFAULT_REGION)"
-    echo ""
-    echo "Examples:"
-    echo "  $0"
-    echo "  $0 efs"
-    echo "  AWS_REGION=us-west-2 $0 ecr"
-}
-
-# Check if help is requested
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    show_usage
-    exit 0
+# Main script execution
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <component-name>"
+    echo "Example: $0 efs"
+    exit 1
 fi
 
-# Call setup_backend with provided argument or it will use default value
 setup_backend "$1"

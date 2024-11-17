@@ -7,6 +7,51 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to install Terraform
+install_terraform() {
+    echo "Terraform not found. Installing..."
+    
+    # Install required packages
+    apt-get update
+    apt-get install -y curl wget unzip
+
+    # Get latest Terraform version
+    LATEST_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | grep current_version | cut -d '"' -f 4)
+    
+    echo "Installing Terraform version: ${LATEST_VERSION}"
+    
+    # Download and install Terraform
+    cd /tmp
+    wget "https://releases.hashicorp.com/terraform/${LATEST_VERSION}/terraform_${LATEST_VERSION}_linux_amd64.zip"
+    unzip "terraform_${LATEST_VERSION}_linux_amd64.zip"
+    mv terraform /usr/local/bin/
+    rm "terraform_${LATEST_VERSION}_linux_amd64.zip"
+    
+    # Verify installation
+    terraform version
+    
+    echo "Terraform installation complete"
+}
+
+# Function to ensure Terraform is installed
+ensure_terraform() {
+    if ! command_exists terraform; then
+        echo "Terraform is not installed"
+        if [ "$EUID" -ne 0 ]; then
+            echo "Please run with sudo to install Terraform"
+            exit 1
+        fi
+        install_terraform
+    else
+        echo "Terraform is already installed: $(terraform version | head -n1)"
+    fi
+}
+
 # Function to validate component path
 validate_path() {
     local path=$1
@@ -25,6 +70,9 @@ manage_component() {
     local extra_args="$@"  # Capture remaining arguments
 
     validate_path "$component_path"
+
+    echo "Ensuring Terraform is installed..."
+    ensure_terraform
 
     # Extract component name and project
     local full_component_name=${component_path#terraform/components/}
