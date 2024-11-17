@@ -7,6 +7,8 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+apt install jq -y
+
 # Check for required commands
 for cmd in aws jq; do
     if ! command_exists $cmd; then
